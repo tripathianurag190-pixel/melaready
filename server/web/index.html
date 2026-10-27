@@ -1,0 +1,864 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MelaReady Connected Team</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#f7f6f0;color:#153d35;font:15px system-ui,-apple-system,sans-serif;line-height:1.4}
+  main{max-width:640px;margin:auto;padding:16px}
+  header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  h1{font-size:26px;margin:0;font-weight:800;color:#153d35}
+  .sub{color:#5c6d64;font-size:13px;line-height:1.4;margin-top:4px}
+  .card{background:#ffffff;border:1px solid #e0e5db;border-radius:20px;padding:18px;margin-bottom:16px;box-shadow:0 2px 6px rgba(0,0,0,0.02)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .row>*{flex:1;min-width:120px}
+  .nav-tabs{display:flex;gap:6px;background:#eaf0e6;padding:4px;border-radius:14px;margin-bottom:16px}
+  .nav-tab{flex:1;padding:10px 4px;text-align:center;border-radius:10px;font-weight:700;font-size:13px;color:#5c6d64;background:transparent;border:0;cursor:pointer}
+  .nav-tab.active{background:#ffffff;color:#153d35;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+  .auth-toggle{display:flex;gap:8px;margin-bottom:14px}
+  .auth-toggle button{flex:1;min-height:42px;font-size:14px}
+  label{display:block;font-weight:700;font-size:13px;margin:12px 0 4px;color:#153d35}
+  input,select,button,textarea{font:inherit;border:1px solid #cbd5cc;border-radius:12px;padding:11px 14px;min-height:46px;width:100%;background:#fff;color:#153d35}
+  input:focus,select:focus,textarea:focus{outline:2px solid #226557;border-color:transparent}
+  button{background:#226557;color:#ffffff;border:0;font-weight:700;cursor:pointer;transition:background 0.15s ease}
+  button:active{opacity:0.9}
+  button:disabled{background:#cbd5cc;color:#88988e;cursor:not-allowed}
+  button.alt{background:#eaf0e6;color:#153d35}
+  button.danger{background:#b9472f;color:#fff}
+  .tag{display:inline-block;padding:4px 8px;background:#eaf0e6;color:#226557;border-radius:8px;font-size:11px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase}
+  .item{padding:12px 0;border-top:1px solid #e0e5db}
+  .item:first-child{border-top:0}
+  .avatar{width:38px;height:38px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:8px;background:#eaf0e6}
+  .error-msg{color:#a12f20;font-size:12px;font-weight:600;margin-top:4px}
+  .status-msg{color:#226557;font-size:13px;font-weight:600;margin-top:8px}
+  .mic-box{text-align:center;padding:20px 10px;background:#f7f6f0;border-radius:16px;margin:12px 0}
+  .mic-btn{width:80px;height:80px;border-radius:50%;background:#226557;color:#fff;font-size:32px;display:inline-flex;align-items:center;justify-content:center;border:0;box-shadow:0 4px 12px rgba(34,101,87,0.3);margin:10px auto;cursor:pointer}
+  .mic-btn.recording{background:#b9472f;animation:pulse 1.2s infinite}
+  @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.06)}100%{transform:scale(1)}}
+  small{color:#5c6d64;font-size:12px}
+  [hidden]{display:none !important}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>MelaReady</h1>
+      <div class="sub">Shared Live Team Workspace · कनेक्टेड लाइव टीम</div>
+    </div>
+    <button class="alt" style="width:auto;min-height:36px;padding:6px 12px;font-size:12px" type="button" onclick="toggleLang()" id="langBtn">EN / हिंदी</button>
+  </header>
+
+  <!-- AUTH SECTION -->
+  <section id="authCard" class="card">
+    <div class="auth-toggle">
+      <button id="tabSignin" type="button" onclick="setAuthMode('login')">Sign In · साइन इन</button>
+      <button id="tabRegister" type="button" class="alt" onclick="setAuthMode('register')">Create Account · खाता बनाएँ</button>
+    </div>
+
+    <div id="regNameGroup" hidden>
+      <label>Display Name · नाम</label>
+      <input id="authName" placeholder="e.g. Ramesh Kumar">
+      <div id="errName" class="error-msg"></div>
+    </div>
+
+    <label>Email Address · ईमेल</label>
+    <input id="authEmail" type="email" placeholder="name@example.com">
+    <div id="errEmail" class="error-msg"></div>
+
+    <label>Password · पासवर्ड</label>
+    <input id="authPassword" type="password" placeholder="At least 8 characters">
+    <div id="errPassword" class="error-msg"></div>
+
+    <div id="regConfirmGroup" hidden>
+      <label>Confirm Password · पासवर्ड की पुष्टि</label>
+      <input id="authConfirmPassword" type="password" placeholder="Repeat password">
+      <div id="errConfirm" class="error-msg"></div>
+    </div>
+
+    <div style="margin-top:16px">
+      <button id="authSubmitBtn" type="button" onclick="submitAuth()">Sign In · साइन इन</button>
+    </div>
+    <div id="authGlobalMsg" class="error-msg" style="margin-top:10px"></div>
+  </section>
+
+  <!-- MAIN APP WORKSPACE -->
+  <section id="appArea" hidden>
+    <!-- EVENT GATE (if not joined an event) -->
+    <div id="eventGate" class="card">
+      <h2 style="margin-top:0">Event Setup · कार्यक्रम</h2>
+
+      <!-- CREATE EVENT FORM -->
+      <label>Create new connected event · नया कार्यक्रम बनाएँ</label>
+      <input id="eventName" type="text" placeholder="Event Name (e.g. Kumbh Volunteer Zone A)">
+      <input id="venue" type="text" placeholder="Venue / Location (e.g. Haridwar Gate 2)" style="margin-top:6px">
+      <div id="errCreateEvent" class="error-msg"></div>
+      <button id="btnCreateEvent" type="button" onclick="createEvent()" style="margin-top:10px">Create Event · कार्यक्रम बनाएँ</button>
+
+      <div style="margin:20px 0 10px;border-top:1px solid #e0e5db"></div>
+
+      <!-- JOIN EVENT FORM -->
+      <label>Join event with 6-character invite code · 6-अक्षरों के कोड से जुड़ें</label>
+      <div class="row">
+        <input id="inviteCode" type="text" placeholder="ABC123" maxlength="6" style="text-transform:uppercase">
+        <button id="btnJoinEvent" type="button" onclick="joinEvent()">Join · जुड़ें</button>
+      </div>
+      <div id="errJoinEvent" class="error-msg"></div>
+
+      <div id="eventGateMsg" class="status-msg" style="margin-top:12px"></div>
+      <div id="eventsList" style="margin-top:16px"></div>
+    </div>
+
+    <!-- WORKSPACE SECTION -->
+    <div id="workspace" hidden>
+      <!-- HEADER BANNER -->
+      <div class="card" style="background:#153d35;color:#fff">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <span class="tag" id="eventRoleTag" style="background:#f0b767;color:#153d35">TEAM MEMBER</span>
+          <button class="alt" type="button" style="width:auto;min-height:32px;padding:4px 10px;font-size:11px" onclick="switchEvent()">Switch Event</button>
+        </div>
+        <h2 id="eventTitle" style="margin:8px 0 4px;font-size:22px"></h2>
+        <div id="eventMeta" style="color:#d6e4d8;font-size:12px"></div>
+        <div id="inviteBox" style="margin-top:10px;background:rgba(255,255,255,0.1);padding:8px 12px;border-radius:10px;font-size:12px;display:flex;justify-content:space-between;align-items:center">
+          <span>Invite Code: <b id="inviteCodeText" style="font-size:15px;letter-spacing:1px"></b></span>
+          <button id="btnRefreshInvite" type="button" class="alt" style="width:auto;min-height:28px;padding:2px 8px;font-size:11px" onclick="refreshInvite()" hidden>Refresh (24h)</button>
+        </div>
+      </div>
+
+      <!-- WORKSPACE TABS -->
+      <div class="nav-tabs">
+        <button class="nav-tab active" type="button" onclick="showTab('ops')" id="tabNavOps">Operations<br><small>संचालन</small></button>
+        <button class="nav-tab" type="button" onclick="showTab('members')" id="tabNavMembers">Members<br><small>सदस्य</small></button>
+        <button class="nav-tab" type="button" onclick="showTab('voice')" id="tabNavVoice">Voice Clips<br><small>वॉइस क्लिप</small></button>
+        <button class="nav-tab" type="button" onclick="showTab('profile')" id="tabNavProfile">Profile<br><small>प्रोफाइल</small></button>
+      </div>
+
+      <!-- TAB 1: OPERATIONS -->
+      <div id="tabOps">
+        <div class="card">
+          <h3 style="margin-top:0">Tasks · कार्य</h3>
+          <input id="taskTitle" placeholder="Task description">
+          <select id="taskAssignee" style="margin-top:6px"></select>
+          <button type="button" onclick="addTask()" style="margin-top:8px">Assign Task · काम सौंपें</button>
+          <div id="tasksList" style="margin-top:12px"></div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-top:0">Incident Reports · रिपोर्ट</h3>
+          <textarea id="reportText" placeholder="Observed facts and details" rows="2"></textarea>
+          <input id="reportZone" placeholder="Zone / Landmark" style="margin-top:6px">
+          <button type="button" onclick="addReport()" style="margin-top:8px">Submit Report · रिपोर्ट भेजें</button>
+          <div id="reportsList" style="margin-top:12px"></div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-top:0">5-Minute Location Sharing · लोकेशन</h3>
+          <div class="sub" style="margin-bottom:10px">Explicit snapshot only. Automatically expires after 5 minutes.</div>
+          <div class="row">
+            <button type="button" onclick="shareLocation()">Share Snapshot · शेयर करें</button>
+            <button type="button" class="alt" onclick="removeLocation()">Remove Mine · हटाएँ</button>
+          </div>
+          <div id="locationStatus" class="status-msg"></div>
+          <div id="locationsList" style="margin-top:12px"></div>
+        </div>
+      </div>
+
+      <!-- TAB 2: MEMBERS -->
+      <div id="tabMembers" hidden>
+        <div class="card">
+          <h3 style="margin-top:0">Joined Team Members · जुड़े सदस्य</h3>
+          <div id="membersList"></div>
+
+          <div id="leadAssignBox" style="margin-top:16px;padding-top:16px;border-top:1px solid #e0e5db" hidden>
+            <h4 style="margin:0 0 8px">Lead Controls: Assign Role & Zone</h4>
+            <select id="assignMember"></select>
+            <div class="row" style="margin-top:6px">
+              <input id="assignRole" placeholder="Role (e.g. Steward)">
+              <input id="assignZone" placeholder="Zone (e.g. Gate A)">
+            </div>
+            <button type="button" onclick="assignMember()" style="margin-top:8px">Save Assignment · सेव करें</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: VOICE -->
+      <div id="tabVoice" hidden>
+        <div class="card">
+          <h3 style="margin-top:0">Push-to-Talk Voice Clips · पुश-टू-टॉक वॉइस क्लिप</h3>
+          <div class="sub">Asynchronous voice updates (max 12s, 250 KB). Shared only with joined members.</div>
+
+          <div class="mic-box">
+            <div id="voiceStatusBadge" class="tag" style="background:#eaf0e6;color:#153d35;font-size:12px">Ready · तैयार</div>
+            <div style="font-size:20px;font-weight:700;margin-top:8px" id="timerDisplay">00:00</div>
+            <button class="mic-btn" type="button" id="btnMic" onmousedown="startVoice()" onmouseup="stopVoice()" ontouchstart="startVoice()" ontouchend="stopVoice()">🎤</button>
+            <div style="font-size:12px;color:#5c6d64">Press & hold mic button, or use controls below</div>
+            <div class="row" style="margin-top:12px">
+              <button id="btnVoiceStart" type="button" onclick="startVoice()">Start speaking · बोलना शुरू</button>
+              <button id="btnVoiceStop" type="button" class="danger" onclick="stopVoice()" disabled>Stop & share · रोकें और भेजें</button>
+            </div>
+          </div>
+
+          <h4>Recent Team Clips · हाल की वॉइस क्लिप्स</h4>
+          <div id="voiceList"></div>
+        </div>
+      </div>
+
+      <!-- TAB 4: PROFILE -->
+      <div id="tabProfile" hidden>
+        <div class="card">
+          <h3 style="margin-top:0">My Profile & Settings · प्रोफाइल</h3>
+          <label>Phone Number (Optional)</label>
+          <input id="profilePhone" inputmode="tel" placeholder="Mobile number">
+          <label style="font-weight:normal;margin-top:8px">
+            <input id="contactVisible" type="checkbox" style="width:auto;min-height:auto;margin-right:6px">
+            Show phone number to joined team members
+          </label>
+
+          <label style="margin-top:12px">Profile Photo (JPEG, max 100 KB)</label>
+          <input id="profilePhotoInput" type="file" accept="image/jpeg">
+          <div style="margin-top:12px">
+            <button type="button" onclick="saveProfile()">Save Profile · सेव करें</button>
+          </div>
+
+          <div style="margin:20px 0 10px;border-top:1px solid #e0e5db"></div>
+          <button type="button" class="danger" onclick="logout()">Sign Out / Logout · साइन आउट</button>
+        </div>
+      </div>
+
+      <div id="globalStatus" class="status-msg" style="text-align:center;margin-top:12px"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+// TASK 3: DIAGNOSTIC & GLOBAL ERROR HANDLERS
+window.onerror = function(msg, url, line) {
+  console.error('[Web Error]', msg, url, line);
+  status('JS Error: ' + msg);
+};
+window.onunhandledrejection = function(evt) {
+  console.error('[Unhandled Rejection]', evt.reason);
+  status('Error: ' + (evt.reason?.message || evt.reason));
+};
+
+let token = localStorage.getItem('mr_token') || '';
+let eventId = localStorage.getItem('mr_event') || '';
+let authMode = 'login'; // 'login' or 'register'
+let snap = null;
+let recorder = null;
+let voiceStream = null;
+let voiceChunks = [];
+let voiceTimer = null;
+let recordingSeconds = 0;
+let profilePhotoBase64 = '';
+let currentTab = 'ops';
+let isHindi = false;
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function toggleLang() {
+  isHindi = !isHindi;
+  status(isHindi ? 'भाषा हिंदी चुनी गई' : 'Language set to English');
+}
+
+async function api(path, body) {
+  let headers = {'Content-Type':'application/json'};
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  let r = await fetch('/api/' + path, {
+    method: body ? 'POST' : 'GET',
+    headers: headers,
+    body: body ? JSON.stringify(body) : undefined
+  });
+  let x = await r.json().catch(() => ({error: 'Invalid response from server'}));
+  if (!r.ok) {
+    if (r.status === 401 && token) {
+      logout('Your session expired. Please sign in again. · आपका सेशन समाप्त हो गया है। कृपया फिर से साइन इन करें।');
+    }
+    let errObj = new Error(x.error || 'Request failed (HTTP ' + r.status + ')');
+    errObj.status = r.status;
+    throw errObj;
+  }
+  return x;
+}
+
+function status(t) {
+  let txt = t || '';
+  if ($('#globalStatus')) $('#globalStatus').textContent = txt;
+  if ($('#eventGateMsg')) $('#eventGateMsg').textContent = txt;
+}
+function err(e) { status(e.message || e); }
+
+// AUTH LOGIC
+function setAuthMode(mode) {
+  authMode = mode;
+  $('#tabSignin').className = mode === 'login' ? '' : 'alt';
+  $('#tabRegister').className = mode === 'register' ? '' : 'alt';
+  $('#regNameGroup').hidden = mode !== 'register';
+  $('#regConfirmGroup').hidden = mode !== 'register';
+  $('#authSubmitBtn').textContent = mode === 'login' ? 'Sign In · साइन इन' : 'Create Account · खाता बनाएँ';
+  $('#authGlobalMsg').textContent = '';
+  clearAuthErrors();
+}
+
+function clearAuthErrors() {
+  $('#errName').textContent = '';
+  $('#errEmail').textContent = '';
+  $('#errPassword').textContent = '';
+  $('#errConfirm').textContent = '';
+  $('#authGlobalMsg').textContent = '';
+}
+
+async function submitAuth() {
+  clearAuthErrors();
+  let email = $('#authEmail').value.trim();
+  let password = $('#authPassword').value;
+  let name = $('#authName').value.trim();
+  let confirm = $('#authConfirmPassword').value;
+
+  let valid = true;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    $('#errEmail').textContent = 'Enter a valid email address · सही ईमेल दर्ज करें';
+    valid = false;
+  }
+  if (password.length < 8) {
+    $('#errPassword').textContent = 'Password must be at least 8 characters · कम से कम 8 अक्षर रखें';
+    valid = false;
+  }
+  if (authMode === 'register') {
+    if (name.length < 2) {
+      $('#errName').textContent = 'Enter your display name · नाम दर्ज करें';
+      valid = false;
+    }
+    if (password !== confirm) {
+      $('#errConfirm').textContent = 'Passwords do not match · पासवर्ड मेल नहीं खाते';
+      valid = false;
+    }
+  }
+
+  if (!valid) return;
+
+  $('#authSubmitBtn').disabled = true;
+  try {
+    let payload = authMode === 'register' ? {email, password, name} : {email, password};
+    let x = await api(authMode, payload);
+    token = x.token;
+    localStorage.setItem('mr_token', token);
+    $('#authCard').hidden = true;
+    $('#appArea').hidden = false;
+    await loadEvents();
+  } catch (e) {
+    $('#authGlobalMsg').textContent = e.message;
+  } finally {
+    $('#authSubmitBtn').disabled = false;
+  }
+}
+
+async function logout(msg) {
+  if (token) {
+    try { await api('logout', {}); } catch (e) {}
+  }
+  localStorage.removeItem('mr_token');
+  localStorage.removeItem('mr_event');
+  token = '';
+  eventId = '';
+  snap = null;
+  $('#appArea').hidden = true;
+  $('#authCard').hidden = false;
+  if (msg) $('#authGlobalMsg').textContent = msg;
+}
+
+// EVENTS LOGIC
+async function loadEvents() {
+  try {
+    let x = await api('events');
+    $('#appArea').hidden = false;
+    $('#authCard').hidden = true;
+    let html = x.events.map(e => `
+      <div class="item" style="display:flex;justify-content:space-between;align-items:center">
+        <div><b>${esc(e.name)}</b><br><small>${esc(e.venue)} · ${esc(e.role)}</small></div>
+        <button class="alt" type="button" style="width:auto;min-height:36px;padding:4px 12px" onclick="chooseEvent('${e.id}')">Open · खोलें</button>
+      </div>
+    `).join('');
+    $('#eventsList').innerHTML = html ? '<h4 style="margin:12px 0 6px">Your Joined Events</h4>' + html : '';
+
+    if (eventId && x.events.some(e => e.id === eventId)) {
+      loadSnapshot();
+    } else {
+      $('#workspace').hidden = true;
+      $('#eventGate').hidden = false;
+    }
+  } catch (e) {
+    err(e);
+  }
+}
+
+// TASK 1: CREATE EVENT FIX
+async function createEvent() {
+  $('#errCreateEvent').textContent = '';
+  status('');
+  let name = $('#eventName').value.trim();
+  let venue = $('#venue').value.trim();
+
+  if (name.length < 2) {
+    $('#errCreateEvent').textContent = 'Enter event name (at least 2 characters) · कार्यक्रम का नाम दर्ज करें';
+    return;
+  }
+  if (venue.length < 2) {
+    $('#errCreateEvent').textContent = 'Enter venue / location (at least 2 characters) · स्थान दर्ज करें';
+    return;
+  }
+
+  let btn = $('#btnCreateEvent');
+  btn.disabled = true;
+  btn.textContent = 'Creating event... · बनाया जा रहा है...';
+
+  try {
+    let x = await api('event/create', {name, venue});
+    status('Event created! Invite code: ' + x.invite + ' · कार्यक्रम बन गया');
+    $('#eventName').value = '';
+    $('#venue').value = '';
+    eventId = x.id;
+    localStorage.setItem('mr_event', x.id);
+    await loadSnapshot();
+    await loadEvents();
+  } catch (e) {
+    $('#errCreateEvent').textContent = e.message;
+    console.error('[CreateEvent Error]', e);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Create Event · कार्यक्रम बनाएँ';
+  }
+}
+
+// TASK 2: JOIN EVENT FIX
+async function joinEvent() {
+  $('#errJoinEvent').textContent = '';
+  status('');
+  let code = $('#inviteCode').value.trim().toUpperCase();
+
+  if (code.length !== 6) {
+    $('#errJoinEvent').textContent = 'Invite code must be exactly 6 characters · 6 अक्षरों का कोड दर्ज करें';
+    return;
+  }
+
+  let btn = $('#btnJoinEvent');
+  btn.disabled = true;
+  btn.textContent = 'Joining... · जुड़ रहे हैं...';
+
+  try {
+    let x = await api('event/join', {invite: code});
+    status('Joined event successfully! · इवेंट से जुड़े');
+    $('#inviteCode').value = '';
+    eventId = x.id;
+    localStorage.setItem('mr_event', x.id);
+    await loadSnapshot();
+    await loadEvents();
+  } catch (e) {
+    let msg = e.message;
+    if (e.status === 404) {
+      msg = 'Invite code not found. Confirm the 6-character code with your team lead. · कोड नहीं मिला।';
+    } else if (e.status === 410) {
+      msg = 'Invite code expired. Ask your lead to refresh the invite code. · आमंत्रण कोड की अवधि समाप्त हो गई।';
+    } else if (e.status === 400) {
+      msg = 'Invalid invite code format (must be 6 characters). · अमान्य कोड।';
+    }
+    $('#errJoinEvent').textContent = msg;
+    console.error('[JoinEvent Error]', e);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Join · जुड़ें';
+  }
+}
+
+function switchEvent() {
+  eventId = '';
+  localStorage.removeItem('mr_event');
+  loadEvents();
+}
+
+function chooseEvent(id) {
+  eventId = id;
+  localStorage.setItem('mr_event', id);
+  if (id) loadSnapshot(); else loadEvents();
+}
+
+async function refreshInvite() {
+  try {
+    await api('event/invite/refresh', {event: eventId});
+    loadSnapshot();
+  } catch (e) { err(e); }
+}
+
+// SNAPSHOT & TAB RENDER
+async function loadSnapshot() {
+  if (!eventId) return;
+  try {
+    snap = await api('snapshot?event=' + encodeURIComponent(eventId));
+    $('#eventGate').hidden = true;
+    $('#workspace').hidden = false;
+
+    let isLead = snap.event.lead_id === snap.me;
+    $('#eventTitle').textContent = snap.event.name;
+    $('#eventRoleTag').textContent = isLead ? 'TEAM LEAD' : 'TEAM MEMBER';
+    $('#eventMeta').textContent = snap.event.venue + ' · Expires ' + new Date(snap.event.invite_expires * 1000).toLocaleTimeString();
+    $('#inviteCodeText').textContent = snap.event.invite;
+    $('#btnRefreshInvite').hidden = !isLead;
+
+    // Member Options
+    let opts = snap.members.map(m => `<option value="${m.id}">${esc(m.name)} (${esc(m.role)})</option>`).join('');
+    $('#taskAssignee').innerHTML = opts;
+    $('#assignMember').innerHTML = opts;
+    $('#leadAssignBox').hidden = !isLead;
+
+    // Populate profile inputs
+    let meInfo = snap.members.find(m => m.id === snap.me);
+    if (meInfo && document.activeElement !== $('#profilePhone')) {
+      $('#profilePhone').value = meInfo.phone || '';
+      $('#contactVisible').checked = !!meInfo.contact_visible;
+    }
+
+    renderTasks();
+    renderReports();
+    renderLocations();
+    renderMembers();
+    renderVoiceClips();
+
+  } catch (e) { err(e); }
+}
+
+function showTab(tab) {
+  currentTab = tab;
+  $('#tabOps').hidden = tab !== 'ops';
+  $('#tabMembers').hidden = tab !== 'members';
+  $('#tabVoice').hidden = tab !== 'voice';
+  $('#tabProfile').hidden = tab !== 'profile';
+
+  $('#tabNavOps').className = tab === 'ops' ? 'nav-tab active' : 'nav-tab';
+  $('#tabNavMembers').className = tab === 'members' ? 'nav-tab active' : 'nav-tab';
+  $('#tabNavVoice').className = tab === 'voice' ? 'nav-tab active' : 'nav-tab';
+  $('#tabNavProfile').className = tab === 'profile' ? 'nav-tab active' : 'nav-tab';
+}
+
+function memberName(id) {
+  return snap?.members?.find(m => m.id === id)?.name || 'Unknown';
+}
+
+// TASKS & REPORTS
+function renderTasks() {
+  if (!snap) return;
+  let html = snap.tasks.map(t => `
+    <div class="item">
+      <span class="tag">${esc(t.status)}</span> <b>${esc(t.title)}</b><br>
+      <small>Assigned to: ${esc(memberName(t.assignee))}</small><br>
+      <button class="alt" type="button" style="margin-top:6px;width:auto;min-height:32px;padding:2px 10px;font-size:12px" onclick="advanceTask('${t.id}')">Advance Status</button>
+    </div>
+  `).join('');
+  $('#tasksList').innerHTML = html || '<div class="sub">No active tasks.</div>';
+}
+
+async function addTask() {
+  let title = $('#taskTitle').value.trim();
+  let assignee = $('#taskAssignee').value;
+  if (!title) return;
+  try {
+    await api('task/create', {event: eventId, title, assignee, client_id: 'task-' + Date.now()});
+    $('#taskTitle').value = '';
+    loadSnapshot();
+  } catch (e) { err(e); }
+}
+
+async function advanceTask(id) {
+  try { await api('task/advance', {event: eventId, id}); loadSnapshot(); } catch (e) { err(e); }
+}
+
+function renderReports() {
+  if (!snap) return;
+  let isLead = snap.event.lead_id === snap.me;
+  let html = snap.reports.map(r => `
+    <div class="item">
+      <span class="tag">${esc(r.status)}</span> <b>${esc(r.details)}</b><br>
+      <small>Zone: ${esc(r.zone)} ${r.assignee ? '· Assigned: ' + esc(memberName(r.assignee)) : ''}</small><br>
+      ${isLead ? `<button class="alt" type="button" style="margin-top:6px;width:auto;min-height:32px;padding:2px 10px;font-size:12px" onclick="advanceReport('${r.id}')">Lead: Next Status</button>` : ''}
+    </div>
+  `).join('');
+  $('#reportsList').innerHTML = html || '<div class="sub">No incident reports.</div>';
+}
+
+async function addReport() {
+  let details = $('#reportText').value.trim();
+  let zone = $('#reportZone').value.trim();
+  if (!details || !zone) return;
+  try {
+    await api('report/create', {event: eventId, details, zone, client_id: 'rep-' + Date.now()});
+    $('#reportText').value = '';
+    loadSnapshot();
+  } catch (e) { err(e); }
+}
+
+async function advanceReport(id) {
+  let r = snap.reports.find(x => x.id === id);
+  let assignee = r.status === 'ACKNOWLEDGED' ? $('#taskAssignee').value : null;
+  try { await api('report/advance', {event: eventId, id, assignee}); loadSnapshot(); } catch (e) { err(e); }
+}
+
+// TASK 4: FIX LOCATION AFTER EVENT MEMBERSHIP
+function renderLocations() {
+  if (!snap) return;
+  let html = snap.locations.map(l => `
+    <div class="item">
+      <b>${esc(l.name)}</b><br>
+      <small>${Number(l.lat).toFixed(5)}, ${Number(l.lng).toFixed(5)} · ±${Math.round(l.accuracy)}m · expires in ${Math.max(0, l.expires - snap.server_time)}s</small>
+    </div>
+  `).join('');
+  $('#locationsList').innerHTML = html || '<div class="sub">No active shared location snapshots.</div>';
+}
+
+function shareLocation() {
+  if (!eventId) {
+    status('Create or join a connected event first. · पहले किसी कार्यक्रम से जुड़ें।');
+    return;
+  }
+  if (!navigator.geolocation) {
+    status('Location unavailable on this device.');
+    return;
+  }
+  status('Obtaining location... · लोकेशन प्राप्त की जा रही है...');
+  navigator.geolocation.getCurrentPosition(async p => {
+    try {
+      await api('location/share', {
+        event: eventId, lat: p.coords.latitude, lng: p.coords.longitude,
+        accuracy: p.coords.accuracy, captured: Math.floor(Date.now()/1000)
+      });
+      status('Location shared with team for 5 minutes! · 5 मिनट के लिए लोकेशन शेयर हुई।');
+      loadSnapshot();
+    } catch (e) { err(e); }
+  }, e => status('Location permission declined or fix unavailable. · अनुमति नहीं मिली।'), {enableHighAccuracy: true, timeout: 15000, maximumAge: 0});
+}
+
+async function shareNativeLocation(lat, lng, accuracy, captured) {
+  if (!eventId) {
+    status('Create or join a connected event first. · पहले किसी कार्यक्रम से जुड़ें।');
+    return;
+  }
+  let nowSec = Math.floor(Date.now() / 1000);
+  let captSec = (captured && captured > 0) ? Math.floor(captured) : nowSec;
+  try {
+    await api('location/share', {event: eventId, lat, lng, accuracy: accuracy || 10, captured: captSec});
+    status('Location shared for 5 minutes. · 5 मिनट के लिए लोकेशन शेयर हुई।');
+    loadSnapshot();
+  } catch (e) { err(e); }
+}
+
+async function removeLocation() {
+  if (!eventId) return;
+  try {
+    await api('location/remove', {event: eventId});
+    status('Location snapshot removed. · लोकेशन स्नैपशॉट हटाया गया।');
+    loadSnapshot();
+  } catch (e) { err(e); }
+}
+
+// MEMBERS
+function renderMembers() {
+  if (!snap) return;
+  let html = snap.members.map(m => `
+    <div class="item" style="display:flex;align-items:center">
+      ${m.photo ? `<img class="avatar" src="${m.photo}" alt="">` : `<div class="avatar" style="display:inline-flex;align-items:center;justify-content:center;font-weight:bold">${esc(m.name.charAt(0))}</div>`}
+      <div>
+        <b>${esc(m.name)}</b><br>
+        <small>${esc(m.role)} · ${esc(m.zone)}${m.phone ? ' · 📞 ' + esc(m.phone) : ''}</small>
+      </div>
+    </div>
+  `).join('');
+  $('#membersList').innerHTML = html;
+}
+
+async function assignMember() {
+  try {
+    await api('member/assign', {
+      event: eventId, user: $('#assignMember').value,
+      role: $('#assignRole').value, zone: $('#assignZone').value
+    });
+    loadSnapshot();
+  } catch (e) { err(e); }
+}
+
+// PROFILE
+$('#profilePhotoInput').addEventListener('change', function() {
+  let file = this.files[0];
+  if (!file) { profilePhotoBase64 = ''; return; }
+  let img = new Image(), url = URL.createObjectURL(file);
+  img.onload = () => {
+    let scale = Math.min(1, 256 / Math.max(img.width, img.height));
+    let canvas = document.createElement('canvas');
+    canvas.width = Math.round(img.width * scale);
+    canvas.height = Math.round(img.height * scale);
+    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+    profilePhotoBase64 = canvas.toDataURL('image/jpeg', 0.72);
+    URL.revokeObjectURL(url);
+    status('Photo ready. Tap Save Profile.');
+  };
+  img.src = url;
+});
+
+async function saveProfile() {
+  try {
+    let oldPhoto = snap?.members?.find(m => m.id === snap.me)?.photo || '';
+    await api('profile', {
+      event: eventId,
+      phone: $('#profilePhone').value.trim(),
+      contact_visible: $('#contactVisible').checked,
+      photo: profilePhotoBase64 || oldPhoto
+    });
+    profilePhotoBase64 = '';
+    status('Profile saved · प्रोफाइल सेव हुई');
+    loadSnapshot();
+  } catch (e) { err(e); }
+}
+
+// TASK 5: FIX MICROPHONE & VOICE CLIPS
+function updateVoiceBadge(text, bg, color) {
+  let b = $('#voiceStatusBadge');
+  if (!b) return;
+  b.textContent = text;
+  b.style.background = bg || '#eaf0e6';
+  b.style.color = color || '#153d35';
+}
+
+async function startVoice() {
+  if (!eventId) {
+    status('Create or join a connected event first before recording voice clips.');
+    return;
+  }
+  if (recorder && recorder.state === 'recording') return;
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    updateVoiceBadge('Microphone unsupported · माइक अनुपलब्ध', '#ffe0db', '#a12f20');
+    status('Microphone recording is not supported in this browser environment.');
+    return;
+  }
+
+  try {
+    updateVoiceBadge('Requesting mic permission...', '#ffe7d2', '#914a17');
+    voiceStream = await navigator.mediaDevices.getUserMedia({audio: true, video: false});
+    let mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'].find(x => MediaRecorder.isTypeSupported(x)) || '';
+    voiceChunks = [];
+    recorder = new MediaRecorder(voiceStream, mime ? {mimeType: mime} : undefined);
+    recorder.ondataavailable = e => { if (e.data.size) voiceChunks.push(e.data); };
+    recorder.onstop = () => uploadVoice();
+    recorder.start();
+
+    $('#btnVoiceStart').disabled = true;
+    $('#btnVoiceStop').disabled = false;
+    $('#btnMic').className = 'mic-btn recording';
+    updateVoiceBadge('Recording · रिकॉर्डिंग चालू (max 12s)', '#ffe0db', '#a12f20');
+
+    recordingSeconds = 0;
+    $('#timerDisplay').textContent = '00:00';
+    clearInterval(voiceTimer);
+    voiceTimer = setInterval(() => {
+      recordingSeconds++;
+      let sec = recordingSeconds < 10 ? '0' + recordingSeconds : recordingSeconds;
+      $('#timerDisplay').textContent = '00:' + sec;
+      if (recordingSeconds >= 12) stopVoice();
+    }, 1000);
+
+  } catch (e) {
+    updateVoiceBadge('Permission denied or mic error · अनुमति नहीं मिली', '#ffe0db', '#a12f20');
+    status('Microphone unavailable. Allow microphone permission in Android settings.');
+    cleanupVoiceStream();
+  }
+}
+
+function stopVoice() {
+  if (!recorder || recorder.state === 'inactive') return;
+  clearInterval(voiceTimer);
+  recorder.stop();
+  $('#btnVoiceStart').disabled = false;
+  $('#btnVoiceStop').disabled = true;
+  $('#btnMic').className = 'mic-btn';
+  updateVoiceBadge('Processing clip... · प्रोसेसिंग', '#eaf0e6', '#153d35');
+}
+
+function cleanupVoiceStream() {
+  if (voiceStream) {
+    voiceStream.getTracks().forEach(t => t.stop());
+    voiceStream = null;
+  }
+}
+
+function uploadVoice() {
+  let blob = new Blob(voiceChunks, {type: recorder?.mimeType || 'audio/webm'});
+  cleanupVoiceStream();
+
+  if (blob.size > 250000) {
+    updateVoiceBadge('Clip too large (>250KB) · बहुत बड़ा क्लिप', '#ffe0db', '#a12f20');
+    return;
+  }
+  updateVoiceBadge('Uploading clip... · अपलोड जारी', '#ffe7d2', '#914a17');
+  let reader = new FileReader();
+  reader.onload = async () => {
+    try {
+      await api('voice/upload', {
+        event: eventId,
+        mime: blob.type.split(';')[0],
+        audio: String(reader.result).split(',')[1]
+      });
+      updateVoiceBadge('Sent! · वॉइस क्लिप शेयर हुई', '#eaf0e6', '#226557');
+      loadSnapshot();
+    } catch (e) {
+      updateVoiceBadge('Upload failed · विफल', '#ffe0db', '#a12f20');
+      err(e);
+    }
+  };
+  reader.readAsDataURL(blob);
+}
+
+function renderVoiceClips() {
+  if (!snap) return;
+  let html = snap.voice.map(v => `
+    <div class="item" style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <b>${esc(v.name)}</b><br>
+        <small>${new Date(v.created * 1000).toLocaleTimeString()}</small>
+      </div>
+      <button class="alt" type="button" style="width:auto;min-height:34px;padding:2px 12px;font-size:12px" onclick="playVoice('${v.id}')">▶ Play Clip</button>
+    </div>
+  `).join('');
+  $('#voiceList').innerHTML = html || '<div class="sub">No recent voice clips.</div>';
+}
+
+async function playVoice(id) {
+  try {
+    let r = await fetch('/api/voice/file?id=' + encodeURIComponent(id), {
+      headers: {Authorization: 'Bearer ' + token}
+    });
+    if (!r.ok) throw Error('Could not load clip');
+    let blob = await r.blob();
+    let url = URL.createObjectURL(blob);
+    let audio = new Audio(url);
+    audio.onended = () => URL.revokeObjectURL(url);
+    await audio.play();
+  } catch (e) { err(e); }
+}
+
+// INITIALIZATION & PERIODIC SYNC
+if (token) {
+  $('#authCard').hidden = true;
+  $('#appArea').hidden = false;
+  loadEvents();
+} else {
+  setAuthMode('login');
+}
+
+setInterval(() => {
+  if (token && eventId && !$('#workspace').hidden) {
+    loadSnapshot();
+  }
+}, 5000);
+</script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+{
+  "demo_note": "This file contains purely fictional sample data for demonstration and testing purposes. It contains no real personal, location, or credential data.",
+  "event": {
+    "name": "MelaReady Haryana Safety Drill",
+    "venue": "Fictional Community Ground, Ambala",
+    "attendance_estimate": 250,
+    "invite_code": "DRILL1"
+  },
+  "members": [
+    {
+      "id": "demo-user-001",
+      "name": "Asha Demo",
+      "email": "asha.demo@example.test",
+      "role": "Team lead",
+      "zone": "Help Desk A",
+      "contact_visible": true,
+      "phone": "+91 98000 00001"
+    },
+    {
+      "id": "demo-user-002",
+      "name": "Ravi Demo",
+      "email": "ravi.demo@example.test",
+      "role": "Steward",
+      "zone": "Gate B",
+      "contact_visible": false,
+      "phone": ""
+    }
+  ],
+  "tasks": [
+    {
+      "id": "task-demo-101",
+      "title": "Verify help-point signage and first-aid kit",
+      "assignee": "demo-user-002",
+      "status": "OPEN"
+    }
+  ],
+  "reports": [
+    {
+      "id": "rep-demo-201",
+      "details": "Fictional missing-person drill: child reunited with family at Gate B",
+      "zone": "Gate B",
+      "status": "SAVED"
+    }
+  ],
+  "sample_location_snapshot": {
+    "latitude": 30.37520,
+    "longitude": 76.78210,
+    "accuracy_meters": 12.5,
+    "note": "Approximate demonstration coordinate in Ambala district; not a real GPS fix or tracked person."
+  }
+}

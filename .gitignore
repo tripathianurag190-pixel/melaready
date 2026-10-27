@@ -1,0 +1,30 @@
+# Gradle & Build
+.gradle/
+.idea/
+build/
+app/build/
+**/build/
+captures/
+.externalNativeBuild/
+.cxx/
+*.iml
+*.hprof
+
+# Android Local & Signing
+local.properties
+*.jks
+*.keystore
+keystore.properties
+
+# Server Runtime & Databases
+server/*.sqlite3
+server/*.db
+server/voice/
+server/uploads/
+server/__pycache__/
+*.pyc
+*.log
+
+# OS & IDE
+.DS_Store
+Thumbs.db

@@ -1,0 +1,7 @@
+Continue MelaReady v0.3 only after reading README.md, START_V3_HINGLISH.md and docs/VALIDATION.md. Preserve the spacious Compose UI and the distinction between local practice, shared team coordination and official emergency services.
+
+First run the Android build, unit tests and lint with JDK 17. Fix compilation or lifecycle problems without upgrading dependencies unnecessarily. Then perform the two-phone checklist and record real results.
+
+For a production-oriented v0.4, replace cleartext LAN transport with HTTPS hosting; add verified email/recovery and account/data deletion; define retention and moderation; encrypt or otherwise protect server storage; add backups, monitoring and load tests. Replace short voice clips with a reviewed real-time voice provider only if it can issue short-lived event-scoped tokens from the authenticated backend. Never embed service secrets in the APK.
+
+Do not add contacts, camera, broad storage, background location or notification permission without a working user-facing feature that requires it. Do not claim automatic dispatch, safe-route verification, government affiliation, offline radio or lakh-user scale.
