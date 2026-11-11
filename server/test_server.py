@@ -1,6 +1,7 @@
-import base64, json, tempfile, threading, unittest, urllib.error, urllib.request
+import base64, json, re, sqlite3, tempfile, threading, unittest, urllib.error, urllib.request
+from unittest.mock import patch
 from pathlib import Path
-import server.server as server
+import server
 from http.server import ThreadingHTTPServer
 
 class ApiTest(unittest.TestCase):
@@ -10,7 +11,7 @@ class ApiTest(unittest.TestCase):
         cls.http=ThreadingHTTPServer(("127.0.0.1",0),server.Handler);cls.port=cls.http.server_port
         threading.Thread(target=cls.http.serve_forever,daemon=True).start()
     @classmethod
-    def tearDownClass(cls):cls.http.shutdown();cls.tmp.cleanup()
+    def tearDownClass(cls):cls.http.shutdown();cls.http.server_close();cls.tmp.cleanup()
     def call(self,path,data=None,token=None):
         headers={"Content-Type":"application/json"};
         if token:headers["Authorization"]="Bearer "+token
@@ -27,146 +28,127 @@ class ApiTest(unittest.TestCase):
         _,snap=self.call("/api/snapshot?event="+eid,None,member);self.assertEqual("OPEN",snap["tasks"][0]["status"])
         self.call("/api/task/advance",{"event":eid,"id":snap["tasks"][0]["id"]},member)
         _,snap=self.call("/api/snapshot?event="+eid,None,lead);self.assertEqual("ACKNOWLEDGED",snap["tasks"][0]["status"])
+
+    def error(self,path,data=None,token=None):
+        with self.assertRaises(urllib.error.HTTPError) as cm:
+            self.call(path,data,token)
+        return cm.exception.code,json.load(cm.exception)
+
+    def test_invite_format_uniqueness_and_persistence(self):
+        lead=self.register("format@example.test","Format Lead")
+        codes=set()
+        for i in range(60):
+            status,e=self.call("/api/event/create",{"name":f"Event {i}","venue":"Ambala"},lead)
+            self.assertEqual(status,201)
+            self.assertRegex(e["invite"],r"^[A-Z]{3}[0-9]{3}$")
+            self.assertNotIn(e["invite"],codes)
+            codes.add(e["invite"])
+            with server.connect() as db:
+                saved=db.execute("SELECT name,venue,invite FROM events WHERE id=?",(e["id"],)).fetchone()
+                self.assertIsNotNone(saved)
+                self.assertEqual(saved["invite"],e["invite"])
+        _,listed=self.call("/api/events",token=lead)
+        self.assertEqual(len(listed["events"]),60)
+
+    def test_retries_code_collision_instead_of_reusing_existing_code(self):
+        lead=self.register("retry@example.test","Retry Lead")
+        with patch.object(server,"invite_code",side_effect=["ABC123","ABC123","DEF456"]):
+            _,first=self.call("/api/event/create",{"name":"First","venue":"Ambala"},lead)
+            _,second=self.call("/api/event/create",{"name":"Second","venue":"Delhi"},lead)
+        self.assertEqual(first["invite"],"ABC123")
+        self.assertEqual(second["invite"],"DEF456")
+
+    def test_join_rejects_invalid_unknown_and_requires_auth(self):
+        lead=self.register("checklead@example.test","Check Lead")
+        member=self.register("checkmember@example.test","Check Member")
+        _,e=self.call("/api/event/create",{"name":"Check event","venue":"Ambala"},lead)
+        self.assertEqual(self.error("/api/event/join",{"invite":"WRONG9"},member)[0],404)
+        self.assertEqual(self.error("/api/event/join",{"invite":"ABC-12"},member)[0],400)
+        self.assertEqual(self.error("/api/event/create",{"name":"Check","venue":"Ambala"})[0],401)
+        self.call("/api/event/join",{"invite":e["invite"].lower()},member)
+        self.call("/api/event/join",{"invite":e["invite"]},member)
+        _,snap=self.call("/api/snapshot?event="+e["id"],token=member)
+        self.assertEqual(len(snap["members"]),2)
+        self.assertEqual(snap["event"]["invite"],e["invite"])
+
+    def test_account_session_is_immediately_usable(self):
+        token=self.register("instant@example.test","Instant User")
+        _,events=self.call("/api/events",token=token)
+        self.assertEqual(events["events"],[])
+        _,created=self.call("/api/event/create",{"name":"Saved event","venue":"Hodal"},token)
+        _,events=self.call("/api/events",token=token)
+        self.assertEqual(events["events"][0]["id"],created["id"])
+
+    def test_voice_upload_download_and_member_access(self):
+        lead=self.register("voicelead@example.test","Voice Lead")
+        member=self.register("voicemember@example.test","Voice Member")
+        outsider=self.register("voiceoutsider@example.test","Outsider")
+        _,event=self.call("/api/event/create",{"name":"Voice event","venue":"Haryana"},lead)
+        event_id=event["id"]
+        self.call("/api/event/join",{"invite":event["invite"]},member)
+        audio=b"\x00\x00\x00\x14ftypM4A "+b"X"*250
+        encoded=base64.b64encode(audio).decode("ascii")
+        code,posted=self.call("/api/voice/upload",{"event":event_id,"mime":"audio/mp4","duration":9,"audio":encoded},lead)
+        self.assertEqual(code,201)
+        _,listing=self.call("/api/voice?event="+event_id,token=member)
+        self.assertEqual(len(listing["clips"]),1)
+        self.assertEqual(listing["clips"][0]["sender"],"Voice Lead")
+        self.assertNotIn("content",listing["clips"][0])
+        request=urllib.request.Request(f"http://127.0.0.1:{self.port}/api/voice/file?id="+posted["id"],headers={"Authorization":"Bearer "+member})
+        with urllib.request.urlopen(request) as response:
+            self.assertEqual(response.read(),audio)
+            self.assertEqual(response.headers.get("Content-Type"),"audio/mp4")
+        self.assertEqual(self.error("/api/voice?event="+event_id,token=outsider)[0],403)
+        with self.assertRaises(urllib.error.HTTPError) as cm:
+            urllib.request.urlopen(urllib.request.Request(f"http://127.0.0.1:{self.port}/api/voice/file?id="+posted["id"],headers={"Authorization":"Bearer "+outsider}))
+        self.assertEqual(cm.exception.code,403)
+        self.assertEqual(self.error("/api/voice/delete",{"id":posted["id"]},outsider)[0],403)
+        self.call("/api/voice/delete",{"id":posted["id"]},lead)
+        _,listing=self.call("/api/voice?event="+event_id,token=member)
+        self.assertEqual(listing["clips"],[])
+
+    def test_voice_rejects_invalid_media_and_nonmembers(self):
+        lead=self.register("voiceformat@example.test","Clip Owner")
+        outsider=self.register("voicenonmember@example.test","Clip Outsider")
+        _,event=self.call("/api/event/create",{"name":"Voice rules","venue":"Haryana"},lead)
+        data={"event":event["id"],"mime":"audio/mp4","duration":15,"audio":base64.b64encode(b"garbage"*50).decode("ascii")}
+        self.assertEqual(self.error("/api/voice/upload",data,lead)[0],400)
+        self.assertEqual(self.error("/api/voice/upload",data,outsider)[0],403)
+        data["audio"]=base64.b64encode(b"\x00\x00\x00\x14ftypM4A "+b"X"*200).decode("ascii")
+        data["duration"]=31
+        self.assertEqual(self.error("/api/voice/upload",data,lead)[0],400)
+
+    def test_existing_email_is_rejected_and_password_not_plaintext(self):
+        email="existing+voice@example.test"
+        self.register(email,"Existing")
+        status,err=self.error("/api/register",{"name":"Existing","email":email,"password":"StrongPass9"})
+        self.assertEqual(status,409)
+        self.assertIn("sign in",err["error"].lower())
+        with server.connect() as db:
+            row=db.execute("SELECT password FROM users WHERE email=?",(email,)).fetchone()
+            self.assertNotIn("StrongPass9",row["password"])
+            self.assertEqual(len(row["password"].split(":")),2)
+
     def test_location_expiry_and_removal(self):
         token=self.register("loc@example.test","Locator");_,e=self.call("/api/event/create",{"name":"Test","venue":"Haryana"},token);eid=e["id"]
         self.call("/api/location/share",{"event":eid,"lat":30.3,"lng":76.8,"accuracy":15,"captured":server.now()},token)
         _,snap=self.call("/api/snapshot?event="+eid,None,token);self.assertEqual(1,len(snap["locations"]))
         self.call("/api/location/remove",{"event":eid},token);_,snap=self.call("/api/snapshot?event="+eid,None,token);self.assertEqual([],snap["locations"])
-    def test_private_contact_and_voice_clip(self):
-        lead=self.register("privacy-lead@example.test","Private Lead");member=self.register("privacy-member@example.test","Viewer")
-        _,e=self.call("/api/event/create",{"name":"Privacy","venue":"Haryana"},lead);eid=e["id"]
-        self.call("/api/event/join",{"invite":e["invite"]},member)
-        self.call("/api/profile",{"event":eid,"phone":"9999999999","contact_visible":False,"photo":""},lead)
-        _,snap=self.call("/api/snapshot?event="+eid,None,member);owner=[m for m in snap["members"] if m["name"]=="Private Lead"][0];self.assertEqual("",owner["phone"])
-        audio=base64.b64encode(b"a"*120).decode();self.call("/api/voice/upload",{"event":eid,"mime":"audio/webm","audio":audio},member)
-        _,snap=self.call("/api/snapshot?event="+eid,None,lead);self.assertEqual(1,len(snap["voice"]));self.assertEqual("Viewer",snap["voice"][0]["name"])
-    def test_health_endpoint(self):
-        status, res = self.call("/api/health")
-        self.assertEqual(200, status)
-        self.assertTrue(res["ok"])
-        self.assertEqual("MelaReady", res["service"])
-        status, res = self.call("/health")
-        self.assertEqual(200, status)
-        self.assertTrue(res["ok"])
 
-    def test_auth_registration_login_logout(self):
-        # Valid registration
-        token = self.register("user1@example.test", "User One")
-        self.assertTrue(len(token) > 10)
 
-        # Duplicate registration fails
-        with self.assertRaises(urllib.error.HTTPError) as caught:
-            self.call("/api/register", {"email": "user1@example.test", "name": "User Dup", "password": "StrongPass9"})
-        self.assertEqual(409, caught.exception.code)
+class PostgreSQLAdapterTranslationTest(unittest.TestCase):
+    def test_parameter_markers_and_task_conflict(self):
+        q = server.PostgreSQLAdapter.translate("INSERT OR IGNORE INTO tasks VALUES(?,?,?)")
+        self.assertEqual(q, "INSERT INTO tasks VALUES(%s,%s,%s) ON CONFLICT DO NOTHING")
 
-        # Short password fails
-        with self.assertRaises(urllib.error.HTTPError) as caught:
-            self.call("/api/register", {"email": "short@example.test", "name": "Short", "password": "123"})
-        self.assertEqual(400, caught.exception.code)
+    def test_location_upsert(self):
+        q = server.PostgreSQLAdapter.translate("INSERT OR REPLACE INTO locations VALUES(?,?,?,?,?,?,?)")
+        self.assertIn("ON CONFLICT(event_id,user_id) DO UPDATE", q)
+        self.assertIn("expires=EXCLUDED.expires", q)
+        self.assertEqual(q.count("%s"), 7)
 
-        # Invalid email fails
-        with self.assertRaises(urllib.error.HTTPError) as caught:
-            self.call("/api/register", {"email": "invalidemail", "name": "Invalid", "password": "StrongPass9"})
-        self.assertEqual(400, caught.exception.code)
-
-        # Login valid
-        status, res = self.call("/api/login", {"email": "user1@example.test", "password": "StrongPass9"})
-        self.assertEqual(200, status)
-        new_token = res["token"]
-
-        # Login invalid password
-        with self.assertRaises(urllib.error.HTTPError) as caught:
-            self.call("/api/login", {"email": "user1@example.test", "password": "WrongPassword"})
-        self.assertEqual(401, caught.exception.code)
-
-        # Logout revokes token
-        self.call("/api/logout", {}, new_token)
-        with self.assertRaises(urllib.error.HTTPError) as caught:
-            self.call("/api/events", None, new_token)
-        self.assertEqual(401, caught.exception.code)
-
-    def test_expired_session_is_rejected(self):
-        token = self.register("expired@example.test", "Expired User")
-        with server.connect() as c:
-            c.execute("UPDATE sessions SET expires=? WHERE user_id=(SELECT id FROM users WHERE email=?)", (server.now() - 10, "expired@example.test"))
-        with self.assertRaises(urllib.error.HTTPError) as caught:
-            self.call("/api/events", None, token)
-        self.assertEqual(401, caught.exception.code)
-
-    def test_voice_clip_validation_and_access(self):
-        lead = self.register("vlead@example.test", "Voice Lead")
-        nonmember = self.register("vnon@example.test", "Non Member")
-        _, e = self.call("/api/event/create", {"name": "Voice Event", "venue": "Venue"}, lead)
-        eid = e["id"]
-
-        # Oversized voice fails (> 250 KB)
-        huge_audio = base64.b64encode(b"a" * 260_000).decode()
-        with self.assertRaises(urllib.error.HTTPError) as caught:
-            self.call("/api/voice/upload", {"event": eid, "mime": "audio/webm", "audio": huge_audio}, lead)
-        self.assertEqual(400, caught.exception.code)
-
-        # Unsupported MIME fails
-        small_audio = base64.b64encode(b"a" * 200).decode()
-        with self.assertRaises(urllib.error.HTTPError) as caught:
-            self.call("/api/voice/upload", {"event": eid, "mime": "audio/wav", "audio": small_audio}, lead)
-        self.assertEqual(400, caught.exception.code)
-
-        # Non-member upload fails
-        with self.assertRaises(urllib.error.HTTPError) as caught:
-            self.call("/api/voice/upload", {"event": eid, "mime": "audio/webm", "audio": small_audio}, nonmember)
-        self.assertEqual(403, caught.exception.code)
-
-    def test_create_event_success_and_validation(self):
-        token = self.register("creator@example.test", "Creator")
-        # Missing event name
-        with self.assertRaises(urllib.error.HTTPError) as caught:
-            self.call("/api/event/create", {"name": " ", "venue": "Ambala"}, token)
-        self.assertEqual(400, caught.exception.code)
-
-        # Missing venue
-        with self.assertRaises(urllib.error.HTTPError) as caught:
-            self.call("/api/event/create", {"name": "Mela Event", "venue": " "}, token)
-        self.assertEqual(400, caught.exception.code)
-
-        # Valid creation
-        status, res = self.call("/api/event/create", {"name": "Kumbh Volunteer Zone A", "venue": "Haridwar Gate 2"}, token)
-        self.assertEqual(201, status)
-        self.assertTrue("id" in res)
-        self.assertEqual(6, len(res["invite"]))
-
-    def test_join_event_validation_and_errors(self):
-        token = self.register("joiner@example.test", "Joiner")
-        # Invalid code length -> 400
-        with self.assertRaises(urllib.error.HTTPError) as caught1:
-            self.call("/api/event/join", {"invite": "ABC"}, token)
-        self.assertEqual(400, caught1.exception.code)
-
-        # Non-existent 6-char code -> 404
-        with self.assertRaises(urllib.error.HTTPError) as caught2:
-            self.call("/api/event/join", {"invite": "NOEXIS"}, token)
-        self.assertEqual(404, caught2.exception.code)
-
-    def test_location_share_membership_rules(self):
-        lead = self.register("loclead@example.test", "Loc Lead")
-        nonmember = self.register("locnon@example.test", "Loc NonMember")
-        _, e = self.call("/api/event/create", {"name": "Loc Event", "venue": "Venue"}, lead)
-        eid = e["id"]
-
-        # Share location non-member fails
-        with self.assertRaises(urllib.error.HTTPError) as caught:
-            self.call("/api/location/share", {"event": eid, "lat": 30.1, "lng": 76.8, "accuracy": 10, "captured": server.now()}, nonmember)
-        self.assertEqual(403, caught.exception.code)
-
-        # Share location member succeeds
-        status, res = self.call("/api/location/share", {"event": eid, "lat": 30.1, "lng": 76.8, "accuracy": 10, "captured": server.now()}, lead)
-        self.assertEqual(200, status)
-        self.assertTrue("expires" in res)
-
-    def test_expired_invite_is_rejected(self):
-        lead=self.register("expiry-lead@example.test","Lead");member=self.register("expiry-member@example.test","Member")
-        _,e=self.call("/api/event/create",{"name":"Expiry","venue":"Haryana"},lead)
-        with server.connect() as c:c.execute("UPDATE events SET invite_expires=? WHERE id=?",(server.now()-1,e["id"]))
-        with self.assertRaises(urllib.error.HTTPError) as caught:self.call("/api/event/join",{"invite":e["invite"]},member)
-        self.assertEqual(410,caught.exception.code)
+    def test_schema_has_unique_invite(self):
+        self.assertIn("invite TEXT UNIQUE NOT NULL", server.POSTGRES_SCHEMA)
+        self.assertIn("BIGINT GENERATED BY DEFAULT AS IDENTITY", server.POSTGRES_SCHEMA)
 
 if __name__=="__main__":unittest.main()

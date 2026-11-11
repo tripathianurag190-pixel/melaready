@@ -2,863 +2,436 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MelaReady Connected Team</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f7f6f0">
+<title>MelaReady v0.7 · Event Coordination</title>
 <style>
+  :root {color-scheme:light;--ink:#153d35;--teal:#356e60;--muted:#5c6d64;--paper:#f7f6f0;--line:#dce3da;--mint:#eaf0e6;--red:#a12f20}
   *{box-sizing:border-box}
-  body{margin:0;background:#f7f6f0;color:#153d35;font:15px system-ui,-apple-system,sans-serif;line-height:1.4}
-  main{max-width:640px;margin:auto;padding:16px}
-  header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-  h1{font-size:26px;margin:0;font-weight:800;color:#153d35}
-  .sub{color:#5c6d64;font-size:13px;line-height:1.4;margin-top:4px}
-  .card{background:#ffffff;border:1px solid #e0e5db;border-radius:20px;padding:18px;margin-bottom:16px;box-shadow:0 2px 6px rgba(0,0,0,0.02)}
-  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-  .row>*{flex:1;min-width:120px}
-  .nav-tabs{display:flex;gap:6px;background:#eaf0e6;padding:4px;border-radius:14px;margin-bottom:16px}
-  .nav-tab{flex:1;padding:10px 4px;text-align:center;border-radius:10px;font-weight:700;font-size:13px;color:#5c6d64;background:transparent;border:0;cursor:pointer}
-  .nav-tab.active{background:#ffffff;color:#153d35;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
-  .auth-toggle{display:flex;gap:8px;margin-bottom:14px}
-  .auth-toggle button{flex:1;min-height:42px;font-size:14px}
-  label{display:block;font-weight:700;font-size:13px;margin:12px 0 4px;color:#153d35}
-  input,select,button,textarea{font:inherit;border:1px solid #cbd5cc;border-radius:12px;padding:11px 14px;min-height:46px;width:100%;background:#fff;color:#153d35}
-  input:focus,select:focus,textarea:focus{outline:2px solid #226557;border-color:transparent}
-  button{background:#226557;color:#ffffff;border:0;font-weight:700;cursor:pointer;transition:background 0.15s ease}
-  button:active{opacity:0.9}
-  button:disabled{background:#cbd5cc;color:#88988e;cursor:not-allowed}
-  button.alt{background:#eaf0e6;color:#153d35}
-  button.danger{background:#b9472f;color:#fff}
-  .tag{display:inline-block;padding:4px 8px;background:#eaf0e6;color:#226557;border-radius:8px;font-size:11px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase}
-  .item{padding:12px 0;border-top:1px solid #e0e5db}
-  .item:first-child{border-top:0}
-  .avatar{width:38px;height:38px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:8px;background:#eaf0e6}
-  .error-msg{color:#a12f20;font-size:12px;font-weight:600;margin-top:4px}
-  .status-msg{color:#226557;font-size:13px;font-weight:600;margin-top:8px}
-  .mic-box{text-align:center;padding:20px 10px;background:#f7f6f0;border-radius:16px;margin:12px 0}
-  .mic-btn{width:80px;height:80px;border-radius:50%;background:#226557;color:#fff;font-size:32px;display:inline-flex;align-items:center;justify-content:center;border:0;box-shadow:0 4px 12px rgba(34,101,87,0.3);margin:10px auto;cursor:pointer}
-  .mic-btn.recording{background:#b9472f;animation:pulse 1.2s infinite}
-  @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.06)}100%{transform:scale(1)}}
-  small{color:#5c6d64;font-size:12px}
-  [hidden]{display:none !important}
+  [hidden]{display:none!important}
+  body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Noto Sans Devanagari",sans-serif}
+  main{max-width:740px;margin:0 auto;padding:18px 18px 38px}
+  h1,h2,h3{font-family:Georgia,"Noto Serif Devanagari",serif;line-height:1.2}
+  h1{font-size:35px;margin:4px 0 7px} h2{font-size:27px;margin:3px 0 15px} h3{font-size:20px;margin:10px 0}
+  p{margin:8px 0 16px}.muted,small{color:var(--muted)}
+  small{font-size:13px}.subheading{font-size:12px;letter-spacing:.08em;color:var(--muted);margin:4px 0 12px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:25px;padding:20px;margin:14px 0;box-shadow:0 3px 15px rgba(21,61,53,.025)}
+  .row{display:flex;gap:11px;align-items:stretch;flex-wrap:wrap}.row>*{flex:1 1 145px;min-width:0}
+  label{display:block;font-weight:700;margin:14px 0 6px}
+  input,select,button,textarea{font:inherit;border:1px solid #bfcac1;border-radius:14px;padding:12px;min-height:49px;width:100%;background:#fff;color:var(--ink)}
+  input:focus,textarea:focus,select:focus{outline:2px solid var(--teal);outline-offset:1px}
+  button{background:var(--teal);color:#fff;border:0;cursor:pointer;font-weight:750}
+  button:disabled{opacity:.6;cursor:wait}button:focus-visible{outline:3px solid #e6b36f;outline-offset:2px}
+  button.alt{background:var(--mint);color:var(--ink)}button.minor{background:#fff;color:var(--ink);border:1px solid var(--line)}
+  .tag{display:inline-block;padding:5px 10px;background:var(--mint);border-radius:12px;font-size:12px;font-weight:750}
+  .item{padding:13px 0;border-top:1px solid var(--line)}.item:first-child{border-top:0}
+  .notice{border-radius:14px;padding:11px 13px;margin:12px 0;background:var(--mint);color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere}
+  .notice.error{background:#fff0eb;color:var(--red)}.notice.ok{background:#eaf4ec;color:#1a5c3e}
+  .owner-only[hidden]{display:none!important}
+  .hint{font-size:12px;color:var(--muted)}
+  .activity{padding:11px 8px;border-bottom:1px solid var(--line)}
+  .geo-map{height:240px;background:linear-gradient(135deg,#eaf0e6,#e5eff3);border:1px solid #cad8ce;border-radius:16px;position:relative;overflow:hidden;margin:12px 0}
+  .map-point{position:absolute;transform:translate(-50%,-50%);padding:7px 9px;width:auto;min-height:0;border-radius:15px;background:#174d43;color:#fff;font-size:12px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .invite-panel{border:1px dashed #9ab3a5;background:#f2f7f0;border-radius:18px;text-align:center;padding:18px 12px;margin:14px 0}
+  .invite-code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:clamp(26px,7vw,41px);font-weight:850;letter-spacing:.14em;display:block;color:var(--ink);margin:4px 0 15px;user-select:all;overflow-wrap:anywhere}
+  .help-text{font-size:13px;line-height:1.5;color:var(--muted)}
+  .event-btn{text-align:left;margin:6px 0;font-weight:650}.text-strong{font-weight:750}
+  .copy-input{position:absolute;left:-9999px;opacity:0}
+  @media (max-width:450px){main{padding:14px 12px 28px}.card{padding:18px;border-radius:19px}h2{font-size:25px}}
 </style>
 </head>
 <body>
 <main>
   <header>
-    <div>
-      <h1>MelaReady</h1>
-      <div class="sub">Shared Live Team Workspace · कनेक्टेड लाइव टीम</div>
-    </div>
-    <button class="alt" style="width:auto;min-height:36px;padding:6px 12px;font-size:12px" type="button" onclick="toggleLang()" id="langBtn">EN / हिंदी</button>
+    <div class="row"><h1>MelaReady</h1><button id="languageToggle" class="alt" style="max-width:145px" onclick="toggleLang()">हिंदी / EN</button></div>
+    <p class="subheading">PREPARE · PRACTISE · COORDINATE</p>
+    <p class="muted">Shared Live Team Workspace · कनेक्टेड लाइव टीम</p>
   </header>
-
-  <!-- AUTH SECTION -->
-  <section id="authCard" class="card">
-    <div class="auth-toggle">
-      <button id="tabSignin" type="button" onclick="setAuthMode('login')">Sign In · साइन इन</button>
-      <button id="tabRegister" type="button" class="alt" onclick="setAuthMode('register')">Create Account · खाता बनाएँ</button>
+  <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+  <section id="auth" class="card">
+    <h2>Sign in / साइन इन</h2>
+    <p class="muted">Sign in to create an event or join an existing team. Both devices must connect to the same server.</p>
+    <label for="name">Name (for new accounts)</label><input id="name" autocomplete="name" maxlength="60" placeholder="Your name">
+    <label for="email">Email</label><input id="email" type="email" autocomplete="email" maxlength="120" placeholder="you@example.com">
+    <label for="password">Password</label><input id="password" type="password" autocomplete="current-password" placeholder="At least 8 characters" minlength="8">
+    <div class="row" style="margin-top:16px">
+      <button id="loginBtn" type="button" onclick="auth('login')">Sign in</button>
+      <button id="registerBtn" type="button" class="alt" onclick="auth('register')">Create account</button>
     </div>
-
-    <div id="regNameGroup" hidden>
-      <label>Display Name · नाम</label>
-      <input id="authName" placeholder="e.g. Ramesh Kumar">
-      <div id="errName" class="error-msg"></div>
-    </div>
-
-    <label>Email Address · ईमेल</label>
-    <input id="authEmail" type="email" placeholder="name@example.com">
-    <div id="errEmail" class="error-msg"></div>
-
-    <label>Password · पासवर्ड</label>
-    <input id="authPassword" type="password" placeholder="At least 8 characters">
-    <div id="errPassword" class="error-msg"></div>
-
-    <div id="regConfirmGroup" hidden>
-      <label>Confirm Password · पासवर्ड की पुष्टि</label>
-      <input id="authConfirmPassword" type="password" placeholder="Repeat password">
-      <div id="errConfirm" class="error-msg"></div>
-    </div>
-
-    <div style="margin-top:16px">
-      <button id="authSubmitBtn" type="button" onclick="submitAuth()">Sign In · साइन इन</button>
-    </div>
-    <div id="authGlobalMsg" class="error-msg" style="margin-top:10px"></div>
+    <p class="help-text">Hackathon prototype only. Not a public emergency dispatch service.</p>
   </section>
-
-  <!-- MAIN APP WORKSPACE -->
-  <section id="appArea" hidden>
-    <!-- EVENT GATE (if not joined an event) -->
+  <section id="app" hidden>
+    <div class="row">
+      <button class="alt" onclick="loadEvents()">Refresh events</button>
+      <button class="minor" onclick="logout()">Sign out</button>
+    </div>
     <div id="eventGate" class="card">
-      <h2 style="margin-top:0">Event Setup · कार्यक्रम</h2>
-
-      <!-- CREATE EVENT FORM -->
-      <label>Create new connected event · नया कार्यक्रम बनाएँ</label>
-      <input id="eventName" type="text" placeholder="Event Name (e.g. Kumbh Volunteer Zone A)">
-      <input id="venue" type="text" placeholder="Venue / Location (e.g. Haridwar Gate 2)" style="margin-top:6px">
-      <div id="errCreateEvent" class="error-msg"></div>
-      <button id="btnCreateEvent" type="button" onclick="window.createEvent()" style="margin-top:10px">Create Event · कार्यक्रम बनाएँ</button>
-
-      <div style="margin:20px 0 10px;border-top:1px solid #e0e5db"></div>
-
-      <!-- JOIN EVENT FORM -->
-      <label>Join event with 6-character invite code · 6-अक्षरों के कोड से जुड़ें</label>
-      <div class="row">
-        <input id="inviteCode" type="text" placeholder="ABC123" maxlength="6" style="text-transform:uppercase">
-        <button id="btnJoinEvent" type="button" onclick="joinEvent()">Join · जुड़ें</button>
+      <h2>Event Setup · कार्यक्रम</h2>
+      <p class="muted">Create a new connected event · नया कार्यक्रम बनाएँ</p>
+      <label for="eventName">Event name / कार्यक्रम का नाम</label>
+      <input id="eventName" maxlength="80" placeholder="Example: Ambala safety drill">
+      <label for="venue">Venue / जगह</label>
+      <input id="venue" maxlength="120" placeholder="Example: Ambala">
+      <button id="createEventBtn" onclick="window.createEvent()" style="margin-top:18px">Create Event · कार्यक्रम बनाएँ</button>
+      <p class="help-text">A successful event gets a unique code: 3 letters + 3 digits (like ABC123).</p>
+      <div id="eventSuccess" class="invite-panel" hidden aria-live="polite">
+        <span class="tag">Event created · कार्यक्रम बन गया</span>
+        <p id="createdName" class="text-strong"></p>
+        <div class="help-text">Your unique six-character invite code</div>
+        <span id="createdInvite" class="invite-code"></span>
+        <div class="row">
+          <button class="alt" onclick="copyCode('createdInvite')">Copy code</button>
+          <button onclick="openCreatedEvent()">Open workspace</button>
+        </div>
+        <p class="help-text">Share this code with other registered members to join your event.</p>
       </div>
-      <div id="errJoinEvent" class="error-msg"></div>
-
-      <div id="eventGateMsg" class="status-msg" style="margin-top:12px"></div>
-      <div id="eventsList" style="margin-top:16px"></div>
+      <hr style="border:0;border-top:1px solid var(--line);margin:22px 0">
+      <h3>Join with event code · कोड से जुड़ें</h3>
+      <label for="invite">Six-character invite code</label>
+      <input id="invite" placeholder="ABC123" maxlength="6" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;font-family:monospace;font-size:19px;letter-spacing:.08em">
+      <button id="joinEventBtn" onclick="window.joinEvent()" style="margin-top:12px">Join event · जुड़ें</button>
+      <h3 style="margin-top:24px">Your existing events</h3>
+      <div id="events"><p class="muted">Loading your events…</p></div>
     </div>
-
-    <!-- WORKSPACE SECTION -->
     <div id="workspace" hidden>
-      <!-- HEADER BANNER -->
-      <div class="card" style="background:#153d35;color:#fff">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start">
-          <span class="tag" id="eventRoleTag" style="background:#f0b767;color:#153d35">TEAM MEMBER</span>
-          <button class="alt" type="button" style="width:auto;min-height:32px;padding:4px 10px;font-size:11px" onclick="switchEvent()">Switch Event</button>
+      <div class="card">
+        <span class="tag" id="eventTag"></span><h2 id="eventTitle" style="margin-top:12px"></h2>
+        <p class="muted" id="eventMeta"></p>
+        <div class="invite-panel">
+          <div class="help-text">Invite your team with this code</div>
+          <span class="invite-code" id="workspaceInvite"></span>
+          <button class="alt" onclick="copyCode('workspaceInvite')">Copy invite code</button>
         </div>
-        <h2 id="eventTitle" style="margin:8px 0 4px;font-size:22px"></h2>
-        <div id="eventMeta" style="color:#d6e4d8;font-size:12px"></div>
-        <div id="inviteBox" style="margin-top:10px;background:rgba(255,255,255,0.1);padding:8px 12px;border-radius:10px;font-size:12px;display:flex;justify-content:space-between;align-items:center">
-          <span>Invite Code: <b id="inviteCodeText" style="font-size:15px;letter-spacing:1px"></b></span>
-          <button id="btnRefreshInvite" type="button" class="alt" style="width:auto;min-height:28px;padding:2px 8px;font-size:11px" onclick="refreshInvite()" hidden>Refresh (24h)</button>
-        </div>
+        <button class="minor" onclick="chooseEvent('')">Switch / join another event</button>
       </div>
-
-      <!-- WORKSPACE TABS -->
-      <div class="nav-tabs">
-        <button class="nav-tab active" type="button" onclick="showTab('ops')" id="tabNavOps">Operations<br><small>संचालन</small></button>
-        <button class="nav-tab" type="button" onclick="showTab('members')" id="tabNavMembers">Members<br><small>सदस्य</small></button>
-        <button class="nav-tab" type="button" onclick="showTab('voice')" id="tabNavVoice">Voice Clips<br><small>वॉइस क्लिप</small></button>
-        <button class="nav-tab" type="button" onclick="showTab('profile')" id="tabNavProfile">Profile<br><small>प्रोफाइल</small></button>
+      <div class="card"><h2 data-en="Members" data-hi="सदस्य">Members</h2><div id="members"></div><div class="owner-only" data-owner><h3 data-en="Creator: assign role and zone" data-hi="आयोजक: भूमिका और क्षेत्र दें">Creator: assign role and zone</h3><select id="assignMember"></select><div class="row"><input id="role" placeholder="Role"><input id="zone" placeholder="Zone"></div><button onclick="assign()" style="margin-top:12px" data-en="Save assignment" data-hi="जिम्मेदारी सेव करें">Save assignment</button></div></div>
+      <div class="card"><h2 data-en="Tasks" data-hi="कार्य">Tasks</h2><div data-owner class="owner-only"><input id="taskTitle" placeholder="Task to complete"><select id="taskAssignee"></select><button onclick="addTask()" style="margin-top:12px">Assign task</button></div><div id="tasks"></div></div>
+      <div class="card"><h2>Reports</h2><textarea id="reportText" placeholder="What was observed? Include facts."></textarea><input id="reportZone" placeholder="Zone / landmark"><button onclick="addReport()" style="margin-top:12px">Save report</button><div id="reports"></div></div>
+      <div class="card" id="sosCard">
+        <h2 data-en="SOS · Event coordination" data-hi="एसओएस · आयोजन समन्वय">SOS · Event coordination</h2>
+        <div class="notice error"><b>In-app coordination only / केवल टीम के लिए</b>: This does NOT contact police, ambulance or emergency services. For immediate danger, contact local emergency services directly (India: 112). Never rely only on this demo.</div>
+        <label for="sosSummary" data-en="What help is needed?" data-hi="किस सहायता की ज़रूरत है?">What help is needed?</label><textarea id="sosSummary" maxlength="240" placeholder="Describe the situation clearly"></textarea>
+        <label for="sosZone" data-en="Zone or landmark" data-hi="क्षेत्र या पहचान वाली जगह">Zone or landmark</label><input id="sosZone" maxlength="100" placeholder="Gate / area">
+        <button id="sendSos" onclick="raiseSos()" data-en="Send alert to event team" data-hi="आयोजन टीम को सूचना भेजें">Send alert to event team</button>
+        <p class="hint">Sending adds a dated entry for all joined members. Only the creator acknowledges or resolves it; the sender can cancel their own.</p>
+        <div id="sosList"></div>
       </div>
-
-      <!-- TAB 1: OPERATIONS -->
-      <div id="tabOps">
-        <div class="card">
-          <h3 style="margin-top:0">Tasks · कार्य</h3>
-          <input id="taskTitle" placeholder="Task description">
-          <select id="taskAssignee" style="margin-top:6px"></select>
-          <button type="button" onclick="addTask()" style="margin-top:8px">Assign Task · काम सौंपें</button>
-          <div id="tasksList" style="margin-top:12px"></div>
-        </div>
-
-        <div class="card">
-          <h3 style="margin-top:0">Incident Reports · रिपोर्ट</h3>
-          <textarea id="reportText" placeholder="Observed facts and details" rows="2"></textarea>
-          <input id="reportZone" placeholder="Zone / Landmark" style="margin-top:6px">
-          <button type="button" onclick="addReport()" style="margin-top:8px">Submit Report · रिपोर्ट भेजें</button>
-          <div id="reportsList" style="margin-top:12px"></div>
-        </div>
-
-        <div class="card">
-          <h3 style="margin-top:0">5-Minute Location Sharing · लोकेशन</h3>
-          <div class="sub" style="margin-bottom:10px">Explicit snapshot only. Automatically expires after 5 minutes.</div>
-          <div class="row">
-            <button type="button" onclick="shareLocation()">Share Snapshot · शेयर करें</button>
-            <button type="button" class="alt" onclick="removeLocation()">Remove Mine · हटाएँ</button>
-          </div>
-          <div id="locationStatus" class="status-msg"></div>
-          <div id="locationsList" style="margin-top:12px"></div>
-        </div>
+      <div class="card" id="readinessCard">
+        <h2 data-en="Shared preparation checklist" data-hi="साझा तैयारी सूची">Shared preparation checklist</h2>
+        <p class="muted">Creator maintains the checklist; everyone can review the status and dates.</p>
+        <div class="owner-only" data-owner><input id="checkText" maxlength="160" placeholder="e.g. Verify exit route with venue authorities"><button onclick="addCheck()">Add checklist item</button></div><div id="checkList"></div>
+        <h3 data-en="Drill and practice log" data-hi="अभ्यास लॉग">Drill and practice log</h3>
+        <div class="owner-only" data-owner><textarea id="drillDescription" maxlength="240" placeholder="Practice observation or drill notes"></textarea><input id="drillZone" maxlength="100" placeholder="Practice zone"><button onclick="addDrill()">Save dated drill note</button></div><div id="drillList"></div>
+        <p class="hint">Offline practice is still available in the Android app and stays on that device. Shared checklist/drills need an online connection.</p>
       </div>
-
-      <!-- TAB 2: MEMBERS -->
-      <div id="tabMembers" hidden>
-        <div class="card">
-          <h3 style="margin-top:0">Joined Team Members · जुड़े सदस्य</h3>
-          <div id="membersList"></div>
-
-          <div id="leadAssignBox" style="margin-top:16px;padding-top:16px;border-top:1px solid #e0e5db" hidden>
-            <h4 style="margin:0 0 8px">Lead Controls: Assign Role & Zone</h4>
-            <select id="assignMember"></select>
-            <div class="row" style="margin-top:6px">
-              <input id="assignRole" placeholder="Role (e.g. Steward)">
-              <input id="assignZone" placeholder="Zone (e.g. Gate A)">
-            </div>
-            <button type="button" onclick="assignMember()" style="margin-top:8px">Save Assignment · सेव करें</button>
-          </div>
-        </div>
+      <div class="card" id="ownerCard" data-owner>
+        <h2 data-en="Creator controls" data-hi="आयोजक नियंत्रण">Creator controls</h2>
+        <p class="muted">Only the account that created this event may edit its name, venue, joining and archival status.</p>
+        <label for="editEventName">Event name</label><input id="editEventName" maxlength="80">
+        <label for="editEventVenue">Venue</label><input id="editEventVenue" maxlength="120">
+        <button onclick="saveEvent()">Save event details</button>
+        <div class="row" style="margin-top:10px"><button id="joinLock" class="alt" onclick="toggleJoin()">Lock joining</button><button id="archiveEvent" class="minor" onclick="toggleArchive()">Archive event</button></div>
+        <h3 data-en="Inspect selected member" data-hi="सदस्य की गतिविधि देखें">Inspect selected member</h3>
+        <p class="hint">Only actions performed in this event, assigned tasks and voice clips the member chose to send. Never records private calls, live microphone or background activity.</p>
+        <select id="inspectMember"></select><button class="alt" onclick="inspectMember()">Show activity, tasks and voice clips</button>
+        <div id="memberOverview"></div>
       </div>
-
-      <!-- TAB 3: VOICE -->
-      <div id="tabVoice" hidden>
-        <div class="card">
-          <h3 style="margin-top:0">Push-to-Talk Voice Clips · पुश-टू-टॉक वॉइस क्लिप</h3>
-          <div class="sub">Asynchronous voice updates (max 12s, 250 KB). Shared only with joined members.</div>
-
-          <div class="mic-box">
-            <div id="voiceStatusBadge" class="tag" style="background:#eaf0e6;color:#153d35;font-size:12px">Ready · तैयार</div>
-            <div style="font-size:20px;font-weight:700;margin-top:8px" id="timerDisplay">00:00</div>
-            <button class="mic-btn" type="button" id="btnMic" onmousedown="startVoice()" onmouseup="stopVoice()" ontouchstart="startVoice()" ontouchend="stopVoice()">🎤</button>
-            <div style="font-size:12px;color:#5c6d64">Press & hold mic button, or use controls below</div>
-            <div class="row" style="margin-top:12px">
-              <button id="btnVoiceStart" type="button" onclick="startVoice()">Start speaking · बोलना शुरू</button>
-              <button id="btnVoiceStop" type="button" class="danger" onclick="stopVoice()" disabled>Stop & share · रोकें और भेजें</button>
-            </div>
-          </div>
-
-          <h4>Recent Team Clips · हाल की वॉइस क्लिप्स</h4>
-          <div id="voiceList"></div>
-        </div>
+      <div class="card" id="timelineCard">
+        <h2 data-en="Event activity timeline" data-hi="आयोजन गतिविधि इतिहास">Event activity timeline</h2>
+        <p class="hint">Server-recorded date/time for actions inside the event. All event members can read this history.</p>
+        <button class="alt" onclick="loadActivity()">Refresh history</button><div id="activityList"></div>
       </div>
-
-      <!-- TAB 4: PROFILE -->
-      <div id="tabProfile" hidden>
-        <div class="card">
-          <h3 style="margin-top:0">My Profile & Settings · प्रोफाइल</h3>
-          <label>Phone Number (Optional)</label>
-          <input id="profilePhone" inputmode="tel" placeholder="Mobile number">
-          <label style="font-weight:normal;margin-top:8px">
-            <input id="contactVisible" type="checkbox" style="width:auto;min-height:auto;margin-right:6px">
-            Show phone number to joined team members
-          </label>
-
-          <label style="margin-top:12px">Profile Photo (JPEG, max 100 KB)</label>
-          <input id="profilePhotoInput" type="file" accept="image/jpeg">
-          <div style="margin-top:12px">
-            <button type="button" onclick="saveProfile()">Save Profile · सेव करें</button>
-          </div>
-
-          <div style="margin:20px 0 10px;border-top:1px solid #e0e5db"></div>
-          <button type="button" class="danger" onclick="logout()">Sign Out / Logout · साइन आउट</button>
-        </div>
+      <div class="card" id="voiceCard">
+        <h2>Team Voice Clips · टीम की आवाज़</h2>
+        <p class="muted">Record up to 30 seconds. Clips are saved in your event and only joined members can play them. This is an in-app tool, not a background emergency alert.</p>
+        <div class="row"><button id="voiceRecord" onclick="startVoice()">Record clip · रिकॉर्ड करें</button><button id="voiceStop" class="alt" onclick="stopVoice()" disabled>Stop & send · भेजें</button><button class="minor" onclick="loadVoice()">Refresh clips</button></div>
+        <p id="voiceStatus" class="help-text" aria-live="polite">Tap Record and allow microphone access.</p>
+        <div id="soundHint" class="help-text">If your device is silent or vibrating, check media volume before playback. Do Not Disturb can still suppress notifications.</div>
+        <div id="voiceClips"></div>
       </div>
-
-      <div id="globalStatus" class="status-msg" style="text-align:center;margin-top:12px"></div>
+      <div class="card"><h2 data-en="Team location map" data-hi="टीम की लोकेशन नक्शा">Team location map</h2><p class="muted">Only explicit sharing. Snapshots expire after 5 minutes; no background tracking. Approximate readings may be inaccurate.</p><div class="row"><button onclick="shareLocation()">Share my location (5 min)</button><button class="alt" onclick="removeLocation()">Remove mine</button></div><div id="mapCanvas" class="geo-map" role="img" aria-label="Approximate current opt-in team locations"></div><div id="locations"></div></div>
+      <div class="card" id="profileCard"><h2 data-en="My profile and visibility" data-hi="मेरी प्रोफ़ाइल और गोपनीयता">My profile and visibility</h2>
+        <label for="profilePhone">Phone (optional)</label><input id="profilePhone" autocomplete="tel" placeholder="Optional phone number" maxlength="15">
+        <label><input id="profileVisible" type="checkbox" style="width:auto;min-height:0"> Allow joined members to see my phone</label>
+        <button onclick="saveProfile()">Save privacy settings</button>
+        <label for="profilePhoto">Profile photo (JPEG, 75 KB max; shared only with event members)</label><input id="profilePhoto" type="file" accept="image/jpeg"><button class="alt" onclick="uploadPhoto()">Upload photo</button>
+        <img id="profilePreview" alt="My profile photo" hidden style="max-width:96px;max-height:96px;border-radius:50%">
+      </div>
+      <p id="msg" class="muted" aria-live="polite"></p>
     </div>
   </section>
+  <input id="copyFallback" class="copy-input" readonly aria-hidden="true">
 </main>
-
 <script>
-// TASK 3: DIAGNOSTIC & GLOBAL ERROR HANDLERS
-window.onerror = function(msg, url, line) {
-  console.error('[Web Error]', msg, url, line);
-  status('JS Error: ' + msg);
-};
-window.onunhandledrejection = function(evt) {
-  console.error('[Unhandled Rejection]', evt.reason);
-  status('Error: ' + (evt.reason?.message || evt.reason));
-};
-
-let token = localStorage.getItem('mr_token') || '';
-let eventId = localStorage.getItem('mr_event') || '';
-let authMode = 'login'; // 'login' or 'register'
-let snap = null;
-let recorder = null;
-let voiceStream = null;
-let voiceChunks = [];
-let voiceTimer = null;
-let recordingSeconds = 0;
-let profilePhotoBase64 = '';
-let currentTab = 'ops';
-let isHindi = false;
-
-const $ = s => document.querySelector(s);
-const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-
-function toggleLang() {
-  isHindi = !isHindi;
-  status(isHindi ? 'भाषा हिंदी चुनी गई' : 'Language set to English');
+'use strict';
+let token=sessionStorage.getItem('mr_token')||'';
+let eventId=sessionStorage.getItem('mr_event')||'';
+let snap=null,createdEventId='',requestBusy=false;
+let hi=localStorage.getItem('mr_lang')==='hi';
+function tr(en,hindi){return hi?hindi:en;}
+function toggleLang(){hi=!hi;localStorage.setItem('mr_lang',hi?'hi':'en');applyLang();}
+function applyLang(){document.documentElement.lang=hi?'hi':'en';document.querySelectorAll('[data-en]').forEach(el=>{el.textContent=el.getAttribute(hi?'data-hi':'data-en')||el.getAttribute('data-en')});$('#languageToggle').textContent=hi?'English':'हिंदी';}
+function stamp(epoch){const n=Number(epoch);return Number.isFinite(n)&&n>0?new Date(n*1000).toLocaleString(hi?'hi-IN':'en-IN',{dateStyle:'medium',timeStyle:'short'}):tr('Date unavailable','तारीख उपलब्ध नहीं');}
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function showNotice(message,type=''){
+  const n=$('#notice');n.textContent=message||'';n.className='notice'+(type?' '+type:'');n.hidden=!message;
 }
-
-async function api(path, body) {
-  let headers = {'Content-Type':'application/json'};
-  if (token) headers['Authorization'] = 'Bearer ' + token;
-  let r = await fetch('/api/' + path, {
-    method: body ? 'POST' : 'GET',
-    headers: headers,
-    body: body ? JSON.stringify(body) : undefined
-  });
-  let x = await r.json().catch(() => ({error: 'Invalid response from server'}));
-  if (!r.ok) {
-    if (r.status === 401 && token) {
-      logout('Your session expired. Please sign in again. · आपका सेशन समाप्त हो गया है। कृपया फिर से साइन इन करें।');
-    }
-    let errObj = new Error(x.error || 'Request failed (HTTP ' + r.status + ')');
-    errObj.status = r.status;
-    throw errObj;
-  }
-  return x;
+function status(message){$('#msg').textContent=message||'';}
+function err(e){showNotice(e?.message||'Request failed','error');status(e?.message||'Request failed');}
+async function api(path,body){
+  let response;
+  try {response=await fetch('/api/'+path,{method:body===undefined?'GET':'POST',headers:{'Content-Type':'application/json',...(token?{'Authorization':'Bearer '+token}:{})},body:body===undefined?undefined:JSON.stringify(body)});}
+  catch(_e){throw Error('Cannot contact MelaReady server. Check server address, Wi-Fi and connection.');}
+  const data=await response.json().catch(()=>({error:'Server sent an invalid response'}));
+  if(!response.ok)throw Error(data.error||'Request failed ('+response.status+')');
+  return data;
 }
-
-function status(t) {
-  let txt = t || '';
-  if ($('#globalStatus')) $('#globalStatus').textContent = txt;
-  if ($('#eventGateMsg')) $('#eventGateMsg').textContent = txt;
+function setBusy(buttonId,value){const b=$(buttonId);if(b)b.disabled=value;}
+async function auth(kind){
+  if(requestBusy)return;
+  requestBusy=true;setBusy('#loginBtn',true);setBusy('#registerBtn',true);
+  try{
+    const email=$('#email').value.trim();const password=$('#password').value;
+    if(!email||!password)throw Error('Enter email and password.');
+    if(kind==='register'&&!$('#name').value.trim())throw Error('Enter your name to create an account.');
+    const x=await api(kind,{name:$('#name').value.trim(),email,password});
+    token=x.token;sessionStorage.setItem('mr_token',token);
+    showNotice(kind==='register'?'Account created. Welcome to MelaReady.':'Signed in successfully.','ok');await loadEvents();
+  }catch(e){err(e)}
+  finally{requestBusy=false;setBusy('#loginBtn',false);setBusy('#registerBtn',false)}
 }
-function err(e) { status(e.message || e); }
-
-// AUTH LOGIC
-function setAuthMode(mode) {
-  authMode = mode;
-  $('#tabSignin').className = mode === 'login' ? '' : 'alt';
-  $('#tabRegister').className = mode === 'register' ? '' : 'alt';
-  $('#regNameGroup').hidden = mode !== 'register';
-  $('#regConfirmGroup').hidden = mode !== 'register';
-  $('#authSubmitBtn').textContent = mode === 'login' ? 'Sign In · साइन इन' : 'Create Account · खाता बनाएँ';
-  $('#authGlobalMsg').textContent = '';
-  clearAuthErrors();
+async function logout(){try{await api('logout',{})}catch(_e){}
+  sessionStorage.removeItem('mr_token');sessionStorage.removeItem('mr_event');token='';eventId='';createdEventId='';voiceEventLoaded='';snap=null;showAuth();showNotice('Signed out.');
 }
-
-function clearAuthErrors() {
-  $('#errName').textContent = '';
-  $('#errEmail').textContent = '';
-  $('#errPassword').textContent = '';
-  $('#errConfirm').textContent = '';
-  $('#authGlobalMsg').textContent = '';
-}
-
-async function submitAuth() {
-  clearAuthErrors();
-  let email = $('#authEmail').value.trim();
-  let password = $('#authPassword').value;
-  let name = $('#authName').value.trim();
-  let confirm = $('#authConfirmPassword').value;
-
-  let valid = true;
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    $('#errEmail').textContent = 'Enter a valid email address · सही ईमेल दर्ज करें';
-    valid = false;
-  }
-  if (password.length < 8) {
-    $('#errPassword').textContent = 'Password must be at least 8 characters · कम से कम 8 अक्षर रखें';
-    valid = false;
-  }
-  if (authMode === 'register') {
-    if (name.length < 2) {
-      $('#errName').textContent = 'Enter your display name · नाम दर्ज करें';
-      valid = false;
-    }
-    if (password !== confirm) {
-      $('#errConfirm').textContent = 'Passwords do not match · पासवर्ड मेल नहीं खाते';
-      valid = false;
-    }
-  }
-
-  if (!valid) return;
-
-  $('#authSubmitBtn').disabled = true;
-  try {
-    let payload = authMode === 'register' ? {email, password, name} : {email, password};
-    let x = await api(authMode, payload);
-    token = x.token;
-    localStorage.setItem('mr_token', token);
-    $('#authCard').hidden = true;
-    $('#appArea').hidden = false;
-    await loadEvents();
-  } catch (e) {
-    $('#authGlobalMsg').textContent = e.message;
-  } finally {
-    $('#authSubmitBtn').disabled = false;
-  }
-}
-
-async function logout(msg) {
-  if (token) {
-    try { await api('logout', {}); } catch (e) {}
-  }
-  localStorage.removeItem('mr_token');
-  localStorage.removeItem('mr_event');
-  token = '';
-  eventId = '';
-  snap = null;
-  $('#appArea').hidden = true;
-  $('#authCard').hidden = false;
-  if (msg) $('#authGlobalMsg').textContent = msg;
-}
-
-// EVENTS LOGIC
-async function loadEvents() {
-  try {
-    let x = await api('events');
-    $('#appArea').hidden = false;
-    $('#authCard').hidden = true;
-    let html = x.events.map(e => `
-      <div class="item" style="display:flex;justify-content:space-between;align-items:center">
-        <div><b>${esc(e.name)}</b><br><small>${esc(e.venue)} · ${esc(e.role)}</small></div>
-        <button class="alt" type="button" style="width:auto;min-height:36px;padding:4px 12px" onclick="chooseEvent('${e.id}')">Open · खोलें</button>
-      </div>
-    `).join('');
-    $('#eventsList').innerHTML = html ? '<h4 style="margin:12px 0 6px">Your Joined Events</h4>' + html : '';
-
-    if (eventId && x.events.some(e => e.id === eventId)) {
-      loadSnapshot();
-    } else {
-      $('#workspace').hidden = true;
-      $('#eventGate').hidden = false;
-    }
-  } catch (e) {
+function showAuth(){$('#auth').hidden=false;$('#app').hidden=true;}
+function showApp(){$('#auth').hidden=true;$('#app').hidden=false;}
+async function loadEvents(){
+  try{
+    const x=await api('events');showApp();
+    $('#events').innerHTML=x.events.map(e=>`<button class="alt event-btn" onclick="chooseEvent('${e.id}')">${esc(e.name)} · ${esc(e.venue)} · ${esc(e.role)} · ${esc(e.invite)}</button>`).join('')||'<p class="muted">No joined events yet. Create or join one above.</p>';
+    if(eventId&&x.events.some(e=>e.id===eventId)) await loadSnapshot();
+    else {eventId='';sessionStorage.removeItem('mr_event');$('#workspace').hidden=true;$('#eventGate').hidden=false;}
+  }catch(e){
+    if(/Session expired|Sign in required/.test(e.message)){token='';sessionStorage.removeItem('mr_token');showAuth();}
     err(e);
   }
 }
-
-// TASK 1: CREATE EVENT FIX
-async function createEvent() {
-  $('#errCreateEvent').textContent = '';
-  status('');
-  let name = $('#eventName').value.trim();
-  let venue = $('#venue').value.trim();
-
-  if (name.length < 2) {
-    $('#errCreateEvent').textContent = 'Enter event name (at least 2 characters) · कार्यक्रम का नाम दर्ज करें';
-    return;
-  }
-  if (venue.length < 2) {
-    $('#errCreateEvent').textContent = 'Enter venue / location (at least 2 characters) · स्थान दर्ज करें';
-    return;
-  }
-
-  let btn = $('#btnCreateEvent');
-  btn.disabled = true;
-  btn.textContent = 'Creating event... · बनाया जा रहा है...';
-
-  try {
-    let x = await api('event/create', {name, venue});
-    status('Event created! Invite code: ' + x.invite + ' · कार्यक्रम बन गया');
-    $('#eventName').value = '';
-    $('#venue').value = '';
-    eventId = x.id;
-    localStorage.setItem('mr_event', x.id);
-    await loadSnapshot();
-    await loadEvents();
-  } catch (e) {
-    $('#errCreateEvent').textContent = e.message;
-    console.error('[CreateEvent Error]', e);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Create Event · कार्यक्रम बनाएँ';
-  }
+async function createEvent(){
+  if(requestBusy)return;
+  const name=$('#eventName').value.trim(),venue=$('#venue').value.trim();
+  if(name.length<2||name.length>80){showNotice('Enter an event name (2–80 characters).','error');return;}
+  if(venue.length<2||venue.length>120){showNotice('Enter a venue (2–120 characters).','error');return;}
+  requestBusy=true;setBusy('#createEventBtn',true);$('#eventSuccess').hidden=true;
+  showNotice('Creating event…');
+  try{
+    const x=await api('event/create',{name,venue});
+    if(!/^[A-Z]{3}[0-9]{3}$/.test(x.invite))throw Error('Unexpected invite code. Check the server version.');
+    createdEventId=x.id;
+    $('#createdName').textContent=x.name+' · '+x.venue;
+    $('#createdInvite').textContent=x.invite;
+    $('#eventSuccess').hidden=false;
+    $('#eventGate').hidden=false;$('#workspace').hidden=true;
+    showNotice('Event created and saved. Copy the invite code below to share it.','ok');
+    $('#eventSuccess').scrollIntoView({block:'nearest',behavior:'smooth'});
+  }catch(e){err(e)}
+  finally{requestBusy=false;setBusy('#createEventBtn',false)}
 }
-
-// TASK 2: JOIN EVENT FIX
-async function joinEvent() {
-  $('#errJoinEvent').textContent = '';
-  status('');
-  let code = $('#inviteCode').value.trim().toUpperCase();
-
-  if (code.length !== 6) {
-    $('#errJoinEvent').textContent = 'Invite code must be exactly 6 characters · 6 अक्षरों का कोड दर्ज करें';
-    return;
-  }
-
-  let btn = $('#btnJoinEvent');
-  btn.disabled = true;
-  btn.textContent = 'Joining... · जुड़ रहे हैं...';
-
-  try {
-    let x = await api('event/join', {invite: code});
-    status('Joined event successfully! · इवेंट से जुड़े');
-    $('#inviteCode').value = '';
-    eventId = x.id;
-    localStorage.setItem('mr_event', x.id);
-    await loadSnapshot();
-    await loadEvents();
-  } catch (e) {
-    let msg = e.message;
-    if (e.status === 404) {
-      msg = 'Invite code not found. Confirm the 6-character code with your team lead. · कोड नहीं मिला।';
-    } else if (e.status === 410) {
-      msg = 'Invite code expired. Ask your lead to refresh the invite code. · आमंत्रण कोड की अवधि समाप्त हो गई।';
-    } else if (e.status === 400) {
-      msg = 'Invalid invite code format (must be 6 characters). · अमान्य कोड।';
+async function openCreatedEvent(){if(createdEventId)await chooseEvent(createdEventId);}
+async function joinEvent(){
+  if(requestBusy)return;
+  const invite=$('#invite').value.trim().toUpperCase();
+  if(!/^[A-Z0-9]{6}$/.test(invite)){showNotice('Enter a valid six-character invite code, like ABC123.','error');return;}
+  requestBusy=true;setBusy('#joinEventBtn',true);showNotice('Joining event…');
+  try{
+    const x=await api('event/join',{invite});
+    await chooseEvent(x.id);
+    showNotice('Joined '+x.name+' successfully.','ok');
+  }catch(e){err(e)}
+  finally{requestBusy=false;setBusy('#joinEventBtn',false)}
+}
+async function chooseEvent(id){
+  if(eventId!==id)voiceEventLoaded='';
+  eventId=id;createdEventId='';
+  if(id){sessionStorage.setItem('mr_event',id);await loadSnapshot();}
+  else {sessionStorage.removeItem('mr_event');$('#eventSuccess').hidden=true;await loadEvents();}
+}
+async function loadSnapshot(){
+  try{
+    snap=await api('snapshot?event='+encodeURIComponent(eventId));
+    for (const key of ['members','tasks','reports','locations']) {
+      if (!Array.isArray(snap[key])) snap[key]=[];
     }
-    $('#errJoinEvent').textContent = msg;
-    console.error('[JoinEvent Error]', e);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Join · जुड़ें';
-  }
-}
-
-function switchEvent() {
-  eventId = '';
-  localStorage.removeItem('mr_event');
-  loadEvents();
-}
-
-function chooseEvent(id) {
-  eventId = id;
-  localStorage.setItem('mr_event', id);
-  if (id) loadSnapshot(); else loadEvents();
-}
-
-async function refreshInvite() {
-  try {
-    await api('event/invite/refresh', {event: eventId});
-    loadSnapshot();
-  } catch (e) { err(e); }
-}
-
-// SNAPSHOT & TAB RENDER
-async function loadSnapshot() {
-  if (!eventId) return;
-  try {
-    snap = await api('snapshot?event=' + encodeURIComponent(eventId));
-    $('#eventGate').hidden = true;
-    $('#workspace').hidden = false;
-
-    let isLead = snap.event.lead_id === snap.me;
-    $('#eventTitle').textContent = snap.event.name;
-    $('#eventRoleTag').textContent = isLead ? 'TEAM LEAD' : 'TEAM MEMBER';
-    $('#eventMeta').textContent = snap.event.venue + ' · Expires ' + new Date(snap.event.invite_expires * 1000).toLocaleTimeString();
-    $('#inviteCodeText').textContent = snap.event.invite;
-    $('#btnRefreshInvite').hidden = !isLead;
-
-    // Member Options
-    let opts = snap.members.map(m => `<option value="${m.id}">${esc(m.name)} (${esc(m.role)})</option>`).join('');
-    $('#taskAssignee').innerHTML = opts;
-    $('#assignMember').innerHTML = opts;
-    $('#leadAssignBox').hidden = !isLead;
-
-    // Populate profile inputs
-    let meInfo = snap.members.find(m => m.id === snap.me);
-    if (meInfo && document.activeElement !== $('#profilePhone')) {
-      $('#profilePhone').value = meInfo.phone || '';
-      $('#contactVisible').checked = !!meInfo.contact_visible;
+    $('#eventGate').hidden=true;$('#workspace').hidden=false;
+    $('#eventTitle').textContent=snap.event.name;
+    $('#eventTag').textContent=snap.event.lead_id===snap.me?'TEAM LEAD':'TEAM MEMBER';
+    $('#eventMeta').textContent=snap.event.venue+' · '+tr('Created','बनाया गया')+' '+stamp(snap.event.created);
+    $('#workspaceInvite').textContent=snap.event.invite;
+    for(const el of document.querySelectorAll('[data-owner]'))el.hidden=!snap.owner;
+    $('#sendSos').disabled=!!snap.event.archived;
+    const opts=snap.members.map(m=>`<option value="${m.id}">${esc(m.name)} · ${esc(m.role)}</option>`).join('');
+    $('#inspectMember').innerHTML=opts;
+    if(snap.owner){
+      $('#editEventName').value=snap.event.name;$('#editEventVenue').value=snap.event.venue;
+      $('#joinLock').textContent=snap.event.locked?'Unlock joining':'Lock joining';
+      $('#archiveEvent').textContent=snap.event.archived?'Reopen event':'Archive event';
     }
-
-    renderTasks();
-    renderReports();
-    renderLocations();
-    renderMembers();
-    renderVoiceClips();
-
-  } catch (e) { err(e); }
+    if($('#profilePhone').dataset.owner!==snap.me){$('#profilePhone').value=snap.profile?.phone||'';$('#profileVisible').checked=!!snap.profile?.contact_visible;$('#profilePhone').dataset.owner=snap.me;}
+    $('#assignMember').innerHTML=opts;$('#taskAssignee').innerHTML=opts;
+    $('#members').innerHTML=snap.members.map(m=>`<div class="item"><b>${esc(m.name)}</b><br><small>${esc(m.role)} · ${esc(m.zone)} · ${stamp(m.joined)}${m.phone?' · '+esc(m.phone):''}</small></div>`).join('');
+    $('#tasks').innerHTML=snap.tasks.map(t=>`<div class="item"><span class="tag">${esc(t.status)}</span> <b>${esc(t.title)}</b><br><small>Assigned: ${esc(memberName(t.assignee))} · ${stamp(t.created)}</small><button class="alt" onclick="advanceTask('${t.id}')">Advance my task</button></div>`).join('')||'<p class="muted">No tasks yet.</p>';
+    $('#reports').innerHTML=snap.reports.map(r=>`<div class="item"><span class="tag">${esc(r.status)}</span> <b>${esc(r.details)}</b><br><small>${esc(r.zone)}${r.assignee?' · '+esc(memberName(r.assignee)):''} · ${stamp(r.created)}</small><button class="alt" onclick="advanceReport('${r.id}')">Lead: next state</button></div>`).join('')||'<p class="muted">No reports yet.</p>';
+    $('#locations').innerHTML=snap.locations.map(l=>`<div class="item"><b>${esc(l.name)}</b><br><small>Accuracy ±${Math.round(l.accuracy)} m · ${stamp(l.captured)} · expires in ${Math.max(0,l.expires-snap.server_time)}s</small><div><a target="_blank" rel="noopener noreferrer" href="https://www.openstreetmap.org/?mlat=${encodeURIComponent(l.lat)}&mlon=${encodeURIComponent(l.lng)}#map=16/${encodeURIComponent(l.lat)}/${encodeURIComponent(l.lng)}">Open map (shares coordinates with OpenStreetMap)</a></div></div>`).join('')||'<p class="muted">No active shared locations.</p>';
+    drawMap();drawChecklist();drawDrills();drawSos();
+    if(!$('#memberOverview').textContent){} // Member inspect remains user-initiated.
+    await loadActivity();
+    await loadVoice();
+    await loadMyPhoto();
+    status('Updated '+new Date().toLocaleTimeString());
+  }catch(e){err(e)}
 }
-
-function showTab(tab) {
-  currentTab = tab;
-  $('#tabOps').hidden = tab !== 'ops';
-  $('#tabMembers').hidden = tab !== 'members';
-  $('#tabVoice').hidden = tab !== 'voice';
-  $('#tabProfile').hidden = tab !== 'profile';
-
-  $('#tabNavOps').className = tab === 'ops' ? 'nav-tab active' : 'nav-tab';
-  $('#tabNavMembers').className = tab === 'members' ? 'nav-tab active' : 'nav-tab';
-  $('#tabNavVoice').className = tab === 'voice' ? 'nav-tab active' : 'nav-tab';
-  $('#tabNavProfile').className = tab === 'profile' ? 'nav-tab active' : 'nav-tab';
-}
-
-function memberName(id) {
-  return snap?.members?.find(m => m.id === id)?.name || 'Unknown';
-}
-
-// TASKS & REPORTS
-function renderTasks() {
-  if (!snap) return;
-  let html = snap.tasks.map(t => `
-    <div class="item">
-      <span class="tag">${esc(t.status)}</span> <b>${esc(t.title)}</b><br>
-      <small>Assigned to: ${esc(memberName(t.assignee))}</small><br>
-      <button class="alt" type="button" style="margin-top:6px;width:auto;min-height:32px;padding:2px 10px;font-size:12px" onclick="advanceTask('${t.id}')">Advance Status</button>
-    </div>
-  `).join('');
-  $('#tasksList').innerHTML = html || '<div class="sub">No active tasks.</div>';
-}
-
-async function addTask() {
-  let title = $('#taskTitle').value.trim();
-  let assignee = $('#taskAssignee').value;
-  if (!title) return;
-  try {
-    await api('task/create', {event: eventId, title, assignee, client_id: 'task-' + Date.now()});
-    $('#taskTitle').value = '';
-    loadSnapshot();
-  } catch (e) { err(e); }
-}
-
-async function advanceTask(id) {
-  try { await api('task/advance', {event: eventId, id}); loadSnapshot(); } catch (e) { err(e); }
-}
-
-function renderReports() {
-  if (!snap) return;
-  let isLead = snap.event.lead_id === snap.me;
-  let html = snap.reports.map(r => `
-    <div class="item">
-      <span class="tag">${esc(r.status)}</span> <b>${esc(r.details)}</b><br>
-      <small>Zone: ${esc(r.zone)} ${r.assignee ? '· Assigned: ' + esc(memberName(r.assignee)) : ''}</small><br>
-      ${isLead ? `<button class="alt" type="button" style="margin-top:6px;width:auto;min-height:32px;padding:2px 10px;font-size:12px" onclick="advanceReport('${r.id}')">Lead: Next Status</button>` : ''}
-    </div>
-  `).join('');
-  $('#reportsList').innerHTML = html || '<div class="sub">No incident reports.</div>';
-}
-
-async function addReport() {
-  let details = $('#reportText').value.trim();
-  let zone = $('#reportZone').value.trim();
-  if (!details || !zone) return;
-  try {
-    await api('report/create', {event: eventId, details, zone, client_id: 'rep-' + Date.now()});
-    $('#reportText').value = '';
-    loadSnapshot();
-  } catch (e) { err(e); }
-}
-
-async function advanceReport(id) {
-  let r = snap.reports.find(x => x.id === id);
-  let assignee = r.status === 'ACKNOWLEDGED' ? $('#taskAssignee').value : null;
-  try { await api('report/advance', {event: eventId, id, assignee}); loadSnapshot(); } catch (e) { err(e); }
-}
-
-// TASK 4: FIX LOCATION AFTER EVENT MEMBERSHIP
-function renderLocations() {
-  if (!snap) return;
-  let html = snap.locations.map(l => `
-    <div class="item">
-      <b>${esc(l.name)}</b><br>
-      <small>${Number(l.lat).toFixed(5)}, ${Number(l.lng).toFixed(5)} · ±${Math.round(l.accuracy)}m · expires in ${Math.max(0, l.expires - snap.server_time)}s</small>
-    </div>
-  `).join('');
-  $('#locationsList').innerHTML = html || '<div class="sub">No active shared location snapshots.</div>';
-}
-
-function shareLocation() {
-  if (!eventId) {
-    status('Create or join a connected event first. · पहले किसी कार्यक्रम से जुड़ें।');
-    return;
-  }
-  if (!navigator.geolocation) {
-    status('Location unavailable on this device.');
-    return;
-  }
-  status('Obtaining location... · लोकेशन प्राप्त की जा रही है...');
-  navigator.geolocation.getCurrentPosition(async p => {
-    try {
-      await api('location/share', {
-        event: eventId, lat: p.coords.latitude, lng: p.coords.longitude,
-        accuracy: p.coords.accuracy, captured: Math.floor(Date.now()/1000)
-      });
-      status('Location shared with team for 5 minutes! · 5 मिनट के लिए लोकेशन शेयर हुई।');
-      loadSnapshot();
-    } catch (e) { err(e); }
-  }, e => status('Location permission declined or fix unavailable. · अनुमति नहीं मिली।'), {enableHighAccuracy: true, timeout: 15000, maximumAge: 0});
-}
-
-async function shareNativeLocation(lat, lng, accuracy, captured) {
-  if (!eventId) {
-    status('Create or join a connected event first. · पहले किसी कार्यक्रम से जुड़ें।');
-    return;
-  }
-  let nowSec = Math.floor(Date.now() / 1000);
-  let captSec = (captured && captured > 0) ? Math.floor(captured) : nowSec;
-  try {
-    await api('location/share', {event: eventId, lat, lng, accuracy: accuracy || 10, captured: captSec});
-    status('Location shared for 5 minutes. · 5 मिनट के लिए लोकेशन शेयर हुई।');
-    loadSnapshot();
-  } catch (e) { err(e); }
-}
-
-async function removeLocation() {
-  if (!eventId) return;
-  try {
-    await api('location/remove', {event: eventId});
-    status('Location snapshot removed. · लोकेशन स्नैपशॉट हटाया गया।');
-    loadSnapshot();
-  } catch (e) { err(e); }
-}
-
-// MEMBERS
-function renderMembers() {
-  if (!snap) return;
-  let html = snap.members.map(m => `
-    <div class="item" style="display:flex;align-items:center">
-      ${m.photo ? `<img class="avatar" src="${m.photo}" alt="">` : `<div class="avatar" style="display:inline-flex;align-items:center;justify-content:center;font-weight:bold">${esc(m.name.charAt(0))}</div>`}
-      <div>
-        <b>${esc(m.name)}</b><br>
-        <small>${esc(m.role)} · ${esc(m.zone)}${m.phone ? ' · 📞 ' + esc(m.phone) : ''}</small>
-      </div>
-    </div>
-  `).join('');
-  $('#membersList').innerHTML = html;
-}
-
-async function assignMember() {
-  try {
-    await api('member/assign', {
-      event: eventId, user: $('#assignMember').value,
-      role: $('#assignRole').value, zone: $('#assignZone').value
-    });
-    loadSnapshot();
-  } catch (e) { err(e); }
-}
-
-// PROFILE
-$('#profilePhotoInput').addEventListener('change', function() {
-  let file = this.files[0];
-  if (!file) { profilePhotoBase64 = ''; return; }
-  let img = new Image(), url = URL.createObjectURL(file);
-  img.onload = () => {
-    let scale = Math.min(1, 256 / Math.max(img.width, img.height));
-    let canvas = document.createElement('canvas');
-    canvas.width = Math.round(img.width * scale);
-    canvas.height = Math.round(img.height * scale);
-    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-    profilePhotoBase64 = canvas.toDataURL('image/jpeg', 0.72);
-    URL.revokeObjectURL(url);
-    status('Photo ready. Tap Save Profile.');
-  };
-  img.src = url;
-});
-
-async function saveProfile() {
-  try {
-    let oldPhoto = snap?.members?.find(m => m.id === snap.me)?.photo || '';
-    await api('profile', {
-      event: eventId,
-      phone: $('#profilePhone').value.trim(),
-      contact_visible: $('#contactVisible').checked,
-      photo: profilePhotoBase64 || oldPhoto
-    });
-    profilePhotoBase64 = '';
-    status('Profile saved · प्रोफाइल सेव हुई');
-    loadSnapshot();
-  } catch (e) { err(e); }
-}
-
-// TASK 5: FIX MICROPHONE & VOICE CLIPS
-function updateVoiceBadge(text, bg, color) {
-  let b = $('#voiceStatusBadge');
-  if (!b) return;
-  b.textContent = text;
-  b.style.background = bg || '#eaf0e6';
-  b.style.color = color || '#153d35';
-}
-
-async function startVoice() {
-  if (!eventId) {
-    status('Create or join a connected event first before recording voice clips.');
-    return;
-  }
-  if (recorder && recorder.state === 'recording') return;
-
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    updateVoiceBadge('Microphone unsupported · माइक अनुपलब्ध', '#ffe0db', '#a12f20');
-    status('Microphone recording is not supported in this browser environment.');
-    return;
-  }
-
-  try {
-    updateVoiceBadge('Requesting mic permission...', '#ffe7d2', '#914a17');
-    voiceStream = await navigator.mediaDevices.getUserMedia({audio: true, video: false});
-    let mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'].find(x => MediaRecorder.isTypeSupported(x)) || '';
-    voiceChunks = [];
-    recorder = new MediaRecorder(voiceStream, mime ? {mimeType: mime} : undefined);
-    recorder.ondataavailable = e => { if (e.data.size) voiceChunks.push(e.data); };
-    recorder.onstop = () => uploadVoice();
-    recorder.start();
-
-    $('#btnVoiceStart').disabled = true;
-    $('#btnVoiceStop').disabled = false;
-    $('#btnMic').className = 'mic-btn recording';
-    updateVoiceBadge('Recording · रिकॉर्डिंग चालू (max 12s)', '#ffe0db', '#a12f20');
-
-    recordingSeconds = 0;
-    $('#timerDisplay').textContent = '00:00';
-    clearInterval(voiceTimer);
-    voiceTimer = setInterval(() => {
-      recordingSeconds++;
-      let sec = recordingSeconds < 10 ? '0' + recordingSeconds : recordingSeconds;
-      $('#timerDisplay').textContent = '00:' + sec;
-      if (recordingSeconds >= 12) stopVoice();
-    }, 1000);
-
-  } catch (e) {
-    updateVoiceBadge('Permission denied or mic error · अनुमति नहीं मिली', '#ffe0db', '#a12f20');
-    status('Microphone unavailable. Allow microphone permission in Android settings.');
-    cleanupVoiceStream();
-  }
-}
-
-function stopVoice() {
-  if (!recorder || recorder.state === 'inactive') return;
-  clearInterval(voiceTimer);
-  recorder.stop();
-  $('#btnVoiceStart').disabled = false;
-  $('#btnVoiceStop').disabled = true;
-  $('#btnMic').className = 'mic-btn';
-  updateVoiceBadge('Processing clip... · प्रोसेसिंग', '#eaf0e6', '#153d35');
-}
-
-function cleanupVoiceStream() {
-  if (voiceStream) {
-    voiceStream.getTracks().forEach(t => t.stop());
-    voiceStream = null;
-  }
-}
-
-function uploadVoice() {
-  let blob = new Blob(voiceChunks, {type: recorder?.mimeType || 'audio/webm'});
-  cleanupVoiceStream();
-
-  if (blob.size > 250000) {
-    updateVoiceBadge('Clip too large (>250KB) · बहुत बड़ा क्लिप', '#ffe0db', '#a12f20');
-    return;
-  }
-  updateVoiceBadge('Uploading clip... · अपलोड जारी', '#ffe7d2', '#914a17');
-  let reader = new FileReader();
-  reader.onload = async () => {
-    try {
-      await api('voice/upload', {
-        event: eventId,
-        mime: blob.type.split(';')[0],
-        audio: String(reader.result).split(',')[1]
-      });
-      updateVoiceBadge('Sent! · वॉइस क्लिप शेयर हुई', '#eaf0e6', '#226557');
-      loadSnapshot();
-    } catch (e) {
-      updateVoiceBadge('Upload failed · विफल', '#ffe0db', '#a12f20');
-      err(e);
+function memberName(id){return snap?.members.find(m=>m.id===id)?.name||'Unknown';}
+async function copyCode(id){
+  const code=$(id).textContent.trim();if(!code)return;
+  try{
+    if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(code);
+    else{
+      const fallback=$('#copyFallback');fallback.value=code;fallback.focus();fallback.select();
+      if(!document.execCommand('copy'))throw Error('copy unavailable');
     }
-  };
-  reader.readAsDataURL(blob);
+    showNotice('Invite code '+code+' copied.','ok');
+  }catch(_e){showNotice('Copy is not available in this WebView. Long-press the code to select and copy it.');}
 }
-
-function renderVoiceClips() {
-  if (!snap) return;
-  let html = snap.voice.map(v => `
-    <div class="item" style="display:flex;justify-content:space-between;align-items:center">
-      <div>
-        <b>${esc(v.name)}</b><br>
-        <small>${new Date(v.created * 1000).toLocaleTimeString()}</small>
-      </div>
-      <button class="alt" type="button" style="width:auto;min-height:34px;padding:2px 12px;font-size:12px" onclick="playVoice('${v.id}')">▶ Play Clip</button>
-    </div>
-  `).join('');
-  $('#voiceList').innerHTML = html || '<div class="sub">No recent voice clips.</div>';
+function clientId(){return (window.crypto?.randomUUID?.() || Date.now()+'-'+Math.random());}
+async function assign(){try{await api('member/assign',{event:eventId,user:$('#assignMember').value,role:$('#role').value,zone:$('#zone').value});await loadSnapshot()}catch(e){err(e)}}
+async function addTask(){try{await api('task/create',{event:eventId,title:$('#taskTitle').value,assignee:$('#taskAssignee').value,client_id:clientId()});$('#taskTitle').value='';await loadSnapshot()}catch(e){err(e)}}
+async function advanceTask(id){try{await api('task/advance',{event:eventId,id});await loadSnapshot()}catch(e){err(e)}}
+async function addReport(){try{await api('report/create',{event:eventId,details:$('#reportText').value,zone:$('#reportZone').value,client_id:clientId()});$('#reportText').value='';await loadSnapshot()}catch(e){err(e)}}
+async function advanceReport(id){try{let r=snap.reports.find(x=>x.id===id),assignee=r.status==='ACKNOWLEDGED'?$('#taskAssignee').value:null;await api('report/advance',{event:eventId,id,assignee});await loadSnapshot()}catch(e){err(e)}}
+function shareLocation(){
+  if(!navigator.geolocation)return showNotice('Location unavailable.','error');
+  navigator.geolocation.getCurrentPosition(async p=>{await shareNativeLocation(p.coords.latitude,p.coords.longitude,p.coords.accuracy,Math.floor(Date.now()/1000));},
+    e=>showNotice(e.code===1?'Location permission declined.':'No fresh location fix.','error'),{enableHighAccuracy:true,timeout:15000,maximumAge:0});
 }
-
-async function playVoice(id) {
-  try {
-    let r = await fetch('/api/voice/file?id=' + encodeURIComponent(id), {
-      headers: {Authorization: 'Bearer ' + token}
-    });
-    if (!r.ok) throw Error('Could not load clip');
-    let blob = await r.blob();
-    let url = URL.createObjectURL(blob);
-    let audio = new Audio(url);
-    audio.onended = () => URL.revokeObjectURL(url);
-    await audio.play();
-  } catch (e) { err(e); }
+async function shareNativeLocation(lat,lng,accuracy,captured){
+  try{if(!eventId)throw Error('Open an event first.');await api('location/share',{event:eventId,lat,lng,accuracy,captured});showNotice('Location shared with this event for five minutes.','ok');await loadSnapshot();}catch(e){err(e)}
 }
-
-// INITIALIZATION & PERIODIC SYNC
-if (token) {
-  $('#authCard').hidden = true;
-  $('#appArea').hidden = false;
-  loadEvents();
-} else {
-  setAuthMode('login');
+async function removeLocation(){try{await api('location/remove',{event:eventId});await loadSnapshot()}catch(e){err(e)}}
+let voiceRecorder=null,voiceStream=null,voiceParts=[],voiceStarted=0,voiceTimer=null,voiceSending=false,voiceEventLoaded='';
+async function loadVoice(){
+  if(!eventId)return;
+  try{
+    const x=await api('voice?event='+encodeURIComponent(eventId));
+    const list=Array.isArray(x.clips)?x.clips:[];
+    const signature=eventId+':'+list.map(v=>v.id).join(',');
+    if (signature===voiceEventLoaded)return;
+    voiceEventLoaded=signature;
+    $('#voiceClips').innerHTML=list.map(v=>`<div class="item"><b>${esc(v.sender)}</b> · ${Number(v.duration)||0}s <small>${new Date(Number(v.created)*1000).toLocaleString()}</small><div class="row"><button class="alt" onclick="playVoice('${v.id}')">Load audio</button><button class="minor" onclick="deleteVoice('${v.id}')">Delete (sender/lead)</button></div><div id="player-${v.id}"></div></div>`).join('')||'<p class="muted">No voice clips yet.</p>';
+  }catch(e){$('#voiceStatus').textContent='Voice clips unavailable: '+e.message;}
 }
-
-setInterval(() => {
-  if (token && eventId && !$('#workspace').hidden) {
-    loadSnapshot();
-  }
-}, 5000);
+async function startVoice(){
+  if(voiceRecorder||voiceSending)return;
+  if(!eventId){$('#voiceStatus').textContent='Open an event first.';return;}
+  if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){$('#voiceStatus').textContent='Voice recording is unavailable on this browser/device.';return;}
+  try{
+    voiceStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+    const format=['audio/webm;codecs=opus','audio/ogg;codecs=opus','audio/mp4'].find(x=>MediaRecorder.isTypeSupported(x));
+    voiceRecorder=new MediaRecorder(voiceStream,{...(format?{mimeType:format}:{}),audioBitsPerSecond:24000});
+    voiceParts=[];voiceStarted=Date.now();const currentEvent=eventId;
+    voiceRecorder.ondataavailable=e=>{if(e.data.size)voiceParts.push(e.data)};
+    voiceRecorder.onerror=()=>{$('#voiceStatus').textContent='Recording failed. Try again.';};
+    voiceRecorder.onstop=async()=>{
+      clearTimeout(voiceTimer);voiceStream?.getTracks().forEach(t=>t.stop());voiceStream=null;
+      const mime=voiceRecorder?.mimeType?.split(';')[0]||'audio/webm';voiceRecorder=null;
+      $('#voiceRecord').disabled=false;$('#voiceStop').disabled=true;
+      const duration=Math.max(1,Math.min(30,Math.ceil((Date.now()-voiceStarted)/1000)));
+      const blob=new Blob(voiceParts,{type:mime});voiceParts=[];
+      if(blob.size>320000){$('#voiceStatus').textContent='Clip too large (320 KB maximum). Record a shorter message.';return;}
+      voiceSending=true;$('#voiceStatus').textContent='Uploading secure team clip…';
+      try{
+        const bytes=new Uint8Array(await blob.arrayBuffer());let encoded='';
+        for(let i=0;i<bytes.length;i+=8192)encoded+=String.fromCharCode(...bytes.subarray(i,i+8192));
+        await api('voice/upload',{event:currentEvent,mime,duration,audio:btoa(encoded)});
+        $('#voiceStatus').textContent='Voice clip sent. Members can refresh to hear it.';
+        await loadVoice();
+      }catch(e){$('#voiceStatus').textContent='Upload failed: '+e.message;}
+      finally{voiceSending=false;}
+    };
+    voiceRecorder.start();$('#voiceRecord').disabled=true;$('#voiceStop').disabled=false;
+    $('#voiceStatus').textContent='Recording (maximum 30 seconds)…';
+    voiceTimer=setTimeout(()=>stopVoice(),30000);
+  }catch(e){voiceStream?.getTracks().forEach(t=>t.stop());voiceStream=null;voiceRecorder=null;$('#voiceStatus').textContent='Microphone could not start: '+e.message;}
+}
+function stopVoice(){if(voiceRecorder?.state==='recording')voiceRecorder.stop();}
+async function playVoice(id){
+  try{
+    const r=await fetch('/api/voice/file?id='+encodeURIComponent(id),{headers:{Authorization:'Bearer '+token}});
+    if(!r.ok)throw Error('Cannot access this clip ('+r.status+')');
+    const blob=await r.blob(),url=URL.createObjectURL(blob),audio=document.createElement('audio');
+    audio.controls=true;audio.src=url;audio.preload='none';
+    audio.addEventListener('ended',()=>URL.revokeObjectURL(url),{once:true});
+    const slot=document.getElementById('player-'+id);slot.replaceChildren(audio);
+    $('#voiceStatus').textContent='Press Play. Check media volume if you hear nothing.';
+  }catch(e){$('#voiceStatus').textContent=e.message;}
+}
+async function deleteVoice(id){
+  if(!confirm('Delete this voice clip from the event?'))return;
+  try{await api('voice/delete',{id});await loadVoice();}catch(e){err(e)}
+}
+let shownPhotoFor='';
+async function loadMyPhoto(){
+  if(!snap||shownPhotoFor===eventId+':'+snap.me)return;
+  shownPhotoFor=eventId+':'+snap.me;
+  try{
+    const r=await fetch('/api/profile/photo?event='+encodeURIComponent(eventId)+'&user='+encodeURIComponent(snap.me),{headers:{Authorization:'Bearer '+token}});
+    if(!r.ok)return;
+    const blob=await r.blob(); const photo=$('#profilePreview');
+    if(photo.dataset.url) URL.revokeObjectURL(photo.dataset.url);
+    const url=URL.createObjectURL(blob);photo.src=url;photo.dataset.url=url;photo.hidden=false;
+  }catch(_e){}
+}
+function drawMap(){
+  const el=$('#mapCanvas');el.replaceChildren();const points=snap.locations||[];
+  if(!points.length){el.textContent=tr('No location shared. Pins appear only with consent.','कोई लोकेशन साझा नहीं की गई।');return;}
+  const lats=points.map(x=>Number(x.lat)),lngs=points.map(x=>Number(x.lng));
+  const minLat=Math.min(...lats),maxLat=Math.max(...lats),minLng=Math.min(...lngs),maxLng=Math.max(...lngs);
+  points.forEach(p=>{const x=(Number(p.lng)-minLng)/(Math.max(maxLng-minLng,.001)),y=(Number(p.lat)-minLat)/Math.max(maxLat-minLat,.001);
+    const btn=document.createElement('span');btn.className='map-point';btn.textContent=p.name;btn.style.left=(10+80*x)+'%';btn.style.top=(90-80*y)+'%';btn.title='Approximate location only';el.appendChild(btn);
+  });
+}
+function drawChecklist(){
+  $('#checkList').innerHTML=(snap.checklist||[]).map(c=>`<div class="item"><span class="tag">${c.completed?'DONE':'OPEN'}</span> ${esc(c.label)}<div class="hint">${stamp(c.updated)}</div>${snap.owner&&!snap.event.archived?`<button class="alt" onclick="toggleCheck('${c.id}')">${c.completed?'Reopen':'Mark complete'}</button>`:''}</div>`).join('')||'<p class="muted">No shared preparation checklist yet.</p>';
+}
+function drawDrills(){
+  $('#drillList').innerHTML=(snap.drills||[]).map(d=>`<div class="item"><b>${esc(d.description)}</b><br><small>${esc(d.zone)} · ${stamp(d.created)}</small></div>`).join('')||'<p class="muted">No shared drill records yet.</p>';
+}
+function drawSos(){
+  $('#sosList').innerHTML=(snap.sos||[]).map(a=>`<div class="item"><span class="tag">${esc(a.status)}</span> <b>${esc(a.summary)}</b><br><small>${esc(memberName(a.reporter))} · ${esc(a.zone)} · ${stamp(a.created)} · Updated ${stamp(a.updated)}</small><div class="row">${snap.owner&&a.status==='OPEN'?`<button onclick="setSos('${a.id}','ACKNOWLEDGED')">Acknowledge</button>`:''}${snap.owner&&a.status==='ACKNOWLEDGED'?`<button onclick="setSos('${a.id}','RESOLVED')">Resolve</button>`:''}${(snap.me===a.reporter||snap.owner)&&a.status!=='RESOLVED'&&a.status!=='CANCELLED'?`<button class="minor" onclick="setSos('${a.id}','CANCELLED')">Cancel alert</button>`:''}</div></div>`).join('')||'<p class="muted">No SOS messages submitted.</p>';
+}
+async function postAndReload(route,body){try{await api(route,{event:eventId,...body});await loadSnapshot();showNotice('Saved with server timestamp.','ok');}catch(e){err(e)}}
+async function raiseSos(){const summary=$('#sosSummary').value.trim(),zone=$('#sosZone').value.trim();if(summary.length<5||!zone){showNotice('Enter a clear SOS description and zone.','error');return;}if(!confirm('Send this in-app SOS to members of this event? This does NOT contact emergency services.'))return;await postAndReload('sos/send',{summary,zone});$('#sosSummary').value='';}
+async function setSos(id,st){await postAndReload('sos/status',{id,status:st});}
+async function addCheck(){const label=$('#checkText').value.trim();if(label.length<3)return showNotice('Enter a checklist item.','error');await postAndReload('checklist/add',{label});$('#checkText').value='';}
+async function toggleCheck(id){await postAndReload('checklist/toggle',{id});}
+async function addDrill(){const description=$('#drillDescription').value.trim(),zone=$('#drillZone').value.trim();if(description.length<5||!zone)return showNotice('Enter drill notes and zone.','error');await postAndReload('drill/create',{description,zone});$('#drillDescription').value='';}
+async function saveEvent(){await postAndReload('event/update',{name:$('#editEventName').value,venue:$('#editEventVenue').value});}
+async function toggleJoin(){await postAndReload('event/lock',{locked:!snap.event.locked});}
+async function toggleArchive(){if(!confirm('Change event archived status? An archived event is read-only.'))return;await postAndReload('event/archive',{archived:!snap.event.archived});}
+async function loadActivity(){if(!eventId)return;try{const data=await api('activity?event='+encodeURIComponent(eventId));$('#activityList').innerHTML=(data.activity||[]).map(a=>`<div class="activity"><b>${esc(a.actor_name)} · ${esc(a.action)}</b><div>${esc(a.detail)}</div><small>${stamp(a.created)}</small></div>`).join('')||'<p class="muted">No activity recorded yet.</p>';}catch(e){$('#activityList').textContent=e.message;}}
+async function inspectMember(){if(!snap?.owner)return;const target=$('#inspectMember').value;try{const data=await api('member/overview?event='+encodeURIComponent(eventId)+'&user='+encodeURIComponent(target));const m=data.member;
+  $('#memberOverview').innerHTML=`<h3>${esc(m.name)}</h3><p class="hint">${esc(m.role)} · ${esc(m.zone)} · Joined ${stamp(m.joined)}</p>`+
+  `<h4>Assigned tasks</h4>`+(data.tasks||[]).map(t=>`<p>${esc(t.title)} · ${esc(t.status)} · ${stamp(t.created)}</p>`).join('')+
+  `<h4>Reports submitted</h4>`+(data.reports||[]).map(r=>`<p>${esc(r.details)} · ${stamp(r.created)}</p>`).join('')+
+  `<h4>Voice messages voluntarily sent</h4>`+(data.voice_clips||[]).map(v=>`<p>${v.duration}s · ${stamp(v.created)} <button class="alt" onclick="playVoice('${v.id}')">Load clip</button><span id="player-${v.id}"></span></p>`).join('')+
+  `<h4>In-event activity</h4>`+(data.activity||[]).map(a=>`<p>${esc(a.action)} · ${esc(a.detail)} · ${stamp(a.created)}</p>`).join('')+
+  `<p class="hint">Location: ${data.location?'A voluntary 5-minute snapshot is currently shared.':'Not currently shared'}</p>`;
+}catch(e){err(e)}}
+async function saveProfile(){await postAndReload('profile',{phone:$('#profilePhone').value,contact_visible:$('#profileVisible').checked});}
+async function uploadPhoto(){const file=$('#profilePhoto').files[0];if(!file||file.type!=='image/jpeg'||file.size>75000){showNotice('Choose a JPEG under 75 KB.','error');return;}try{const data=new Uint8Array(await file.arrayBuffer());const chars=[];for(let i=0;i<data.length;i+=8192)chars.push(String.fromCharCode(...data.subarray(i,i+8192)));await api('profile/photo',{jpeg:btoa(chars.join(''))});shownPhotoFor='';await loadMyPhoto();showNotice('Photo saved to private member profiles.','ok');}catch(e){err(e)}}
+window.createEvent=createEvent;
+window.joinEvent=joinEvent;
+applyLang();if(token)loadEvents();else showAuth();
+setInterval(()=>{if(eventId&&!$('#workspace').hidden&&!requestBusy)loadSnapshot();},5000);
 </script>
 </body>
 </html>
